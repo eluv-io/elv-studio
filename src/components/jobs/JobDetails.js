@@ -1,17 +1,22 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {useRouteMatch} from "react-router-dom";
+import {useHistory} from "react-router-dom";
 import {observer} from "mobx-react";
 
-import {ingestStore} from "Stores";
+import {fileStore, ingestStore} from "Stores";
 import ImageIcon from "Components/common/ImageIcon";
 import {PageLoader} from "Components/common/Loader";
 import {Copyable} from "Components/common/Copyable";
+import Dialog from "Components/common/Dialog";
 import CheckmarkIcon from "Assets/icons/check.svg";
 import LoadingIcon from "Assets/icons/loading.gif";
 
 const JobDetails = observer(() => {
   const match = useRouteMatch();
+  const history = useHistory();
+
   const jobId = match.params.id;
+  const [deleteDialogOpen, setRemoveDialogOpen] = useState(false);
 
   useEffect(() => {
     ingestStore.SetJob(jobId);
@@ -30,11 +35,16 @@ const JobDetails = observer(() => {
     });
   };
 
-  const HandleIngest = async () => {
-    if(ingestStore.job.currentStep !== "create" || ingestStore.job.create.runState !== "finished") { return; }
+  const HandleIngest = async (retry=false) => {
+    if(
+      !retry &&
+      ingestStore.job.currentStep !== "create" ||
+      ingestStore.job.create.runState !== "finished"
+    ) { return; }
 
-    const {abr, access, copy, files, libraryId, title, accessGroup, description, s3Url, writeToken, playbackEncryption} = ingestStore.job.formData.master;
+    const {abr, access, copy, libraryId, title, accessGroup, description, s3Url, writeToken, playbackEncryption} = ingestStore.job.formData.master;
     const mezFormData = ingestStore.job.formData.mez;
+    const files = await fileStore.GetFile({jobId});
 
     const response = await ingestStore.CreateProductionMaster({
       libraryId,
@@ -86,6 +96,30 @@ const JobDetails = observer(() => {
     return (
       <div className="job-details__error">
         { ingestStore.jobs[jobId].errorMessage || fallbackErrorMessage }
+      </div>
+    );
+  };
+
+  const RetryJob = () => {
+    HandleIngest(true);
+  };
+
+  const FooterActions = () => {
+    return (
+      <div className="job-details__footer-actions">
+        <button type="button" className="secondary-button" onClick={() => setRemoveDialogOpen(true)}>
+          Remove
+        </button>
+        {
+          ingestStore.jobs[jobId].error &&
+          <button
+            type="button"
+            className="primary-button"
+            onClick={RetryJob}
+          >
+            Retry
+          </button>
+        }
       </div>
     );
   };
@@ -209,7 +243,19 @@ const JobDetails = observer(() => {
             </>
         }
         { DisplayError() }
+        { FooterActions() }
       </div>
+      <Dialog
+        title={`Remove ${ingestStore.jobs[jobId].formData.master.title || jobId}`}
+        description="Are you sure you want to remove this job? This action cannot be undone."
+        ConfirmCallback={() => {
+          ingestStore.RemoveJob({id: jobId});
+          history.replace("/jobs");
+        }}
+        confirmText="Remove"
+        open={deleteDialogOpen}
+        onOpenChange={setRemoveDialogOpen}
+      />
     </div>
   );
 });

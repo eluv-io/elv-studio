@@ -1,6 +1,7 @@
 import {configure, flow, makeObservable, observable} from "mobx";
 import {FrameClient} from "@eluvio/elv-client-js/src/FrameClient";
 import IngestStore from "Stores/IngestStore";
+import FileStore from "Stores/FileStore";
 
 // Force strict mode so mutations are only allowed within actions.
 configure({
@@ -10,16 +11,19 @@ configure({
 class RootStore {
   loaded = false;
   client;
+  walletClient;
   networkInfo;
 
   constructor() {
     makeObservable(this, {
       client: observable,
+      walletClient: observable,
       loaded: observable,
       networkInfo: observable
     });
 
     this.Initialize();
+    this.fileStore = new FileStore(this);
     this.ingestStore = new IngestStore(this);
   }
 
@@ -55,6 +59,7 @@ class RootStore {
 }
 
 export const rootStore = new RootStore();
+export const fileStore = rootStore.fileStore;
 export const ingestStore = rootStore.ingestStore;
 
 window.rootStore = rootStore;
