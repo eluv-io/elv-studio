@@ -469,7 +469,7 @@ const Create = observer(() => {
             uploadMethod === "local" &&
               <>
                 <Dropzone
-                  accept={{"audio/*": [], "video/*": []}}
+                  accept={{"audio/*": [], "video/*": [], "application/mxf": []}}
                   id="main-dropzone"
                   onDrop={files => setFiles(files)}
                 />
