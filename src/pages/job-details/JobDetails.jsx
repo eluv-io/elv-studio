@@ -51,8 +51,8 @@ const FinalizeInfo = observer(({jobId}) => {
         label="ID"
         value={ingestStore.jobs[jobId].finalize.objectId}
         secondary
-        type="LINK"
-        LinkCallback={() => OpenObjectLink({
+        type="ACTION"
+        onClick={() => OpenObjectLink({
           libraryId: ingestStore.jobs[jobId].formData?.mez.libraryId,
           objectId: ingestStore.jobs[jobId].finalize.objectId
         })}

@@ -1,20 +1,30 @@
-import {ActionIcon, Button, Flex, Text} from "@mantine/core";
+import {ActionIcon, Anchor, Button, Flex, Text, Tooltip} from "@mantine/core";
 import {CopyToClipboard} from "@/utils/helpers.js";
-import {CheckmarkIcon, ClipboardIcon} from "@/assets/icons/index.jsx";
+import {ClipboardIcon} from "@/assets/icons/index.jsx";
 import {useState} from "react";
 import {observer} from "mobx-react-lite";
 import styles from "./JobDetailsCard.module.css";
 
-const LinkText = ({value, LinkCallback}) => {
+const ActionText = ({value, onClick}) => {
   return (
     <Flex maw="100%">
       <Button
         variant="transparent"
-        onClick={() => LinkCallback}
+        onClick={() => onClick()}
         pl={0}
       >
         <Text truncate="end">{ value }</Text>
       </Button>
+    </Flex>
+  );
+};
+
+const LinkText = ({value}) => {
+  return (
+    <Flex maw="100%">
+      <Anchor href={value} target="_blank" classNames={{root: styles.link}} w="100%">
+        <Text truncate="end">{ value }</Text>
+      </Anchor>
     </Flex>
   );
 };
@@ -27,22 +37,21 @@ const CopyText = ({value}) => {
       <Text truncate="end">
         { value }
       </Text>
-      <ActionIcon
-        variant="transparent"
-        onClick={() => {
-          CopyToClipboard({text: value});
-          setCopied(true);
+      <Tooltip label={copied ? "Copied": "Copy"} position="right">
+        <ActionIcon
+          variant="transparent"
+          onClick={() => {
+            CopyToClipboard({text: value});
+            setCopied(true);
 
-          setTimeout(() => {
-            setCopied(false);
-          }, [3000]);
-        }}
-      >
-        {
-          copied ?
-            <CheckmarkIcon /> : <ClipboardIcon />
-        }
-      </ActionIcon>
+            setTimeout(() => {
+              setCopied(false);
+            }, [3000]);
+          }}
+        >
+          <ClipboardIcon color="var(--mantine-color-elv-neutral-5)" />
+        </ActionIcon>
+      </Tooltip>
     </Flex>
   );
 };
@@ -58,11 +67,12 @@ const JobDetailsCard = observer(({
   value,
   secondary = false,
   type,
-  LinkCallback
+  onClick
 }) => {
   const TYPE_MAP = {
     "TEXT": <PlainText value={value} />,
-    "LINK": <LinkText LinkCallback={LinkCallback} value={value} />,
+    "LINK": <LinkText value={value} />,
+    "ACTION": <ActionText  LinkCallback={() => onClick()} value={value} />,
     "COPY": <CopyText value={value} />
   };
 
