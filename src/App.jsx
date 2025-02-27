@@ -1,29 +1,35 @@
-import {PageLoader} from "@/components/common/Loader.jsx";
 import {HashRouter} from "react-router-dom";
 import JobsWrapper from "@/pages/jobs/JobsWrapper.jsx";
 import {observer} from "mobx-react-lite";
-import LeftNavigation from "@/components/LeftNavigation.jsx";
+import LeftNavigation from "@/components/left-navigation/LeftNavigation.jsx";
 import WarningDialog from "@/components/WarningDialog.jsx";
 import {rootStore} from "@/stores/index.js";
 import AppRoutes from "./Routes.jsx";
-import {MantineProvider} from "@mantine/core";
+import {AppShell, Loader, MantineProvider} from "@mantine/core";
 import "@mantine/core/styles.css";
+import MantineTheme from "@/assets/MantineTheme.js";
 
 const App = observer(() => {
-  if(!rootStore.loaded) { return <PageLoader />; }
-
   return (
-    <MantineProvider withCssVariables>
+    <MantineProvider withCssVariables theme={{...MantineTheme}}>
       <HashRouter>
-        <div className="app-container">
+        <AppShell
+          padding="0"
+          navbar={{width: 200, breakpoint: "sm"}}
+        >
           <LeftNavigation />
-          <main>
-            <JobsWrapper>
-              <AppRoutes />
-            </JobsWrapper>
+          <AppShell.Main>
+            {
+              rootStore.loaded ?
+                (
+                  <JobsWrapper>
+                    <AppRoutes />
+                  </JobsWrapper>
+                ) : <Loader />
+            }
             <WarningDialog />
-          </main>
-        </div>
+          </AppShell.Main>
+        </AppShell>
       </HashRouter>
     </MantineProvider>
   );
