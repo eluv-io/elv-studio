@@ -1,11 +1,11 @@
-import {AppShell, Tooltip, NavLink} from "@mantine/core";
+import {AppShell, NavLink} from "@mantine/core";
 import {useLocation, useNavigate} from "react-router-dom";
-import styles from "@/components/side-navigation/SideNavigation.module.css";
+import styles from "./SideNavigation.module.css";
 import {CubeIcon, CubePlusIcon} from "@/assets/icons/index.jsx";
 
 const NAV_LINKS = [
-  {path: "/new", icon: <CubePlusIcon />, title: "Create"},
-  {path: "/content", icon: <CubeIcon />, title: "Content"},
+  {path: "/new", icon: <CubePlusIcon />, label: "Create"},
+  {path: "/jobs", icon: <CubeIcon />, label: "Content"},
 ];
 
 const SideNavigation = () => {
@@ -15,23 +15,21 @@ const SideNavigation = () => {
   return (
     <AppShell.Navbar p="24 14">
       {
-        NAV_LINKS.map(({path, icon, title}) => (
-          <Tooltip
+        NAV_LINKS.map(({path, icon, label}) => (
+          <NavLink
             key={`navigation-link-${path}`}
-            label={title}
-            position="right"
-            withArrow
-          >
-            <NavLink
-              key={`navigation-link-${path}`}
-              classNames={{section: styles.section}}
-              href="#"
-              onClick={() => navigate(path)}
-              active={path === location.pathname}
-              leftSection={icon}
-              title={title}
-            />
-          </Tooltip>
+            classNames={{
+              root: styles.root,
+              label: styles.label,
+              section: styles.section
+            }}
+            href="#"
+            label={label}
+            leftSection={icon}
+            onClick={() => navigate(path)}
+            title={label}
+            active={path === location.pathname}
+          />
         ))
       }
     </AppShell.Navbar>

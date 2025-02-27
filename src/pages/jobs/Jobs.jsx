@@ -8,10 +8,15 @@ import {Button, Text} from "@mantine/core";
 
 import styles from "./Jobs.module.css";
 import ConfirmModal from "@/components/confirm-modal/ConfirmModal.jsx";
+import {SortTable} from "@/utils/helpers.js";
 
 const Jobs = observer(() => {
   const [showClearJobsDialog, setShowClearJobsDialog] = useState(false);
   const navigate = useNavigate();
+  const [sortStatus, setSortStatus] = useState({
+    columnAccessor: "_title",
+    direction: "asc"
+  });
 
   if(!ingestStore.jobs || Object.keys(ingestStore.jobs).length === 0) {
     return <div className="page-container">No active jobs.</div>;
@@ -51,7 +56,8 @@ const Jobs = observer(() => {
     item["_title"] = item.formData?.master?.title;
     item["_objectId"] = id;
     return item;
-  });
+  })
+    .sort(SortTable({sortStatus}));
 
   return (
     <PageContainer title="Ingest Jobs">
@@ -81,6 +87,8 @@ const Jobs = observer(() => {
           onRowClick={({record}) => {
             navigate(record._objectId);
           }}
+          sortStatus={sortStatus}
+          onSortStatusChange={setSortStatus}
           rowClassName={() => styles.row}
           columns={[
             { accessor: "_title", title: "Name", sortable: true, render: record => <Text>{ record._title }</Text> },

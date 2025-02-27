@@ -23,7 +23,6 @@ import styles from "./JobDetails.module.css";
 import PageContainer from "@/components/page-container/PageContainer.jsx";
 import TextCard from "@/components/text-card/TextCard.jsx";
 import JobDetailsCard from "@/pages/job-details/card/JobDetailsCard.jsx";
-import {IconChevronLeft} from "@tabler/icons-react";
 
 const OpenObjectLink = ({libraryId, objectId}) => {
   rootStore.client.SendMessage({
@@ -332,13 +331,12 @@ const JobDetails = observer(() => {
       width="725px"
       actions={[
         {
-          label: "All Content",
-          leftSection: <IconChevronLeft height={18} />,
-          variant: "outline",
-          onClick: () => navigate("/content")
+          label: "Back",
+          variant: "filled",
+          onClick: () => navigate("/jobs")
         }
       ]}
-      BackLinkCallback={() => navigate("/content")}
+      BackLinkCallback={() => navigate("/jobs")}
     >
       <div className="job-details">
         <JobInfo jobId={jobId} />

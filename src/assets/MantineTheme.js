@@ -5,10 +5,21 @@ const theme = createTheme({
   headings: {
     fontFamily: "Helvetica Neue, Helvetica, sans-serif"
   },
-  primaryColor: "elv-violet",
-  primaryShade: 3,
-  scale: 1,
+  primaryColor: "elv-blue",
+  primaryShade: 5,
   colors: {
+    "elv-blue": [
+      "#ebf3fc", // eluvio color
+      "#f8f9fd", // eluvio color
+      "#a6bff6",
+      "#228be6", // eluvio color
+      "#3f85e3", // eluvio color
+      "#336be4", // eluvio color
+      "#2361e3",
+      "#1351cb",
+      "#0648b6",
+      "#003ea2"
+    ],
     "elv-violet": [
       "#f9e9ff",
       "#ebcfff",
@@ -34,8 +45,13 @@ const theme = createTheme({
       "#4b494e", // eluvio color
       "#3c3c3c" // eluvio color
     ],
+    "elv-black": [
+      "#22252a", // eluvio color
+      "#202020", // eluvio color
+      "#1e1e1e" // eluvio color
+    ],
     "elv-neutral": [
-      "#f8f2fe",
+      "#eeeeee", // eluvio color
       "#ecece8", // eluvio color
       "#cdc8d3",
       "#b2aaba", // eluvio color
@@ -60,33 +76,51 @@ const theme = createTheme({
     ]
   },
   components: {
-    Accordion: {
+    Anchor: {
       styles: () => ({
-        control: {
-          backgroundColor: "var(--mantine-color-elv-gray-4)"
-        },
-        label: {
-          lineHeight: 1,
-          paddingTop: "var(--mantine-spacing-sm)",
-          paddingBottom: "var(--mantine-spacing-sm)",
-          fontWeight: 600,
-          color: "var(--mantine-color-elv-gray-8)"
-        },
-        item: {
-          "--item-border-color": "transparent"
-        },
-        panel: {
-          color: "var(--mantine-color-elv-gray-8)"
-        },
-        content: {
-          padding: 0
+        root: {
+          "textDecoration": "underline",
+          "fontWeight": "700",
+          "fontSize": "0.75rem"
         }
       })
     },
-    Badge: {
+    AppShell: {
       styles: () => ({
         root: {
-          "--badge-height-lg": "calc(37.5px* var(--mantine-scale))"
+          "--app-shell-border-color": "var(--mantine-color-elv-neutral-0)"
+        }
+      })
+    },
+    Button: {
+      styles: (theme, params) => ({
+        root: {
+          "borderRadius": "0",
+          "minWidth": "7rem",
+          "minHeight": "35px",
+          ...(params.variant === "outline" && {
+            "borderColor": "var(--mantine-color-elv-gray-3)",
+            ...(params.disabled && {
+              "backgroundColor": "transparent"
+            })
+          })
+        },
+        label: {
+          "fontWeight": "400",
+          ...(params.size === "sm" && {
+            "fontSize": "calc(0.85rem * var(--mantine-scale)"
+          }),
+          ...(params.variant === "outline" && !params.disabled && {
+            "color": "var(--mantine-color-elv-black-0)"
+          })
+        }
+      })
+    },
+    Checkbox: {
+      styles: () => ({
+        input: {
+          "--checkbox-color": "var(--mantine-color-elv-blue-3)",
+          "borderRadius": "0"
         }
       })
     },
@@ -99,21 +133,56 @@ const theme = createTheme({
         }
       })
     },
-    Modal: {
+    Group: {
       styles: () => ({
         root: {
-          "--modal-size-xxl": "calc(55.75rem * var(--mantine-scale))"
+          "--mantine-spacing-xxs": "0.3125rem"
         }
       })
     },
-    Switch: {
+    Indicator: {
       styles: () => ({
         root: {
-          "--switch-height-xxl": "calc(2.625rem*var(--mantine-scale))",
-          "--switch-width-xxl": "calc(4.75rem*var(--mantine-scale))",
-          "--switch-thumb-size-xxl": "calc(2rem* var(--mantine-scale))",
-          "--switch-label-font-size-xxl": "calc(0.75rem* var(--mantine-scale))",
-          "--switch-track-label-padding-xxl": "calc(0.25rem* var(--mantine-scale))"
+          "lgg": "16px"
+        }
+      })
+    },
+    Modal: {
+      styles: () => ({
+        title: {
+          "fontSize": "1.25rem"
+        }
+      })
+    },
+    NavLink: {
+      styles: (theme, params) => ({
+        root: {
+          ...(params.active && {
+            "backgroundColor": "var(--mantine-color-elv-blue-1)"
+          })
+        },
+        label: {
+          "fontSize": "20px",
+          ...(params.active && {
+            "color": "var(--mantine-color-elv-blue-3)"
+          })
+        }
+      })
+    },
+    Radio: {
+      styles: () => ({
+        root: {
+          "--radio-icon-size": "0.5rem",
+        },
+        radio: {
+          "--radio-color": "var(--mantine-color-elv-blue-3)"
+        }
+      })
+    },
+    Select: {
+      styles: () => ({
+        input: {
+          "borderRadius": "0"
         }
       })
     },
@@ -128,10 +197,10 @@ const theme = createTheme({
         }
       }
     },
-    Tabs: {
+    TextInput: {
       styles: () => ({
-        list: {
-          "--tabs-list-border-size": "1px"
+        input: {
+          "borderRadius": "0"
         }
       })
     }

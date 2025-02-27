@@ -20,7 +20,7 @@ const App = observer(() => {
       <BrowserRouter>
         <AppShell
           padding={0}
-          navbar={{width: 70, breakpoint: "sm"}}
+          navbar={{width: 200, breakpoint: "sm"}}
         >
           <SideNavigation />
           <AppShell.Main>

@@ -1,5 +1,4 @@
 import {Alert, Box, Button, Flex, Title} from "@mantine/core";
-import styles from "@/components/page-container/PageContainer.module.css";
 import {useEffect, useRef} from "react";
 
 const AlertMessage = ({error}) => {
@@ -74,7 +73,7 @@ const PageContainer = ({
         {
           title &&
           <Flex justify={centerTitle ? "center" : "flex-start"}>
-            <Title order={3} classNames={{root: styles.root}} mb={24}>
+            <Title order={3} size={22} c="elv-gray.9" mb={24}>
               { title }
             </Title>
           </Flex>

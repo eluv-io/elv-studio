@@ -48,7 +48,7 @@ const Permissions = ({permission, setPermission}) => {
     <Box mb={16}>
       <Select
         label="Permission"
-        description="Set a permission level."
+        description="Content object permission level."
         tooltip={
           Object.values(rootStore.client.permissionLevels).map(({short, description}) =>
             <div key={`permission-info-${short}`} className="form__permission-tooltip-item">
@@ -426,13 +426,14 @@ const Create = observer(() => {
   };
 
   if(masterObjectId) {
-    return <Navigate to={`/content/${masterObjectId}`} replace />;
+    return <Navigate to={`/jobs/${masterObjectId}`} replace />;
   }
 
   return (
     <PageContainer title="Ingest New Video on Demand" width="750px" error={error}>
       <FabricLoader>
         <form onSubmit={HandleSubmit}>
+          <FormSectionTitle title="Source" />
           <Radio.Group
             label="Upload Method"
             name="uploadMethod"
@@ -441,8 +442,16 @@ const Create = observer(() => {
             mb={16}
           >
             <Stack mt="xs">
-              <Radio value="LOCAL" label="Local File" />
-              <Radio value="S3" label="S3 Bucket" />
+              <Radio
+                value="LOCAL"
+                label="Local File"
+                description="Select a file from your device. Ideal for quick uploads from your computer."
+              />
+              <Radio
+                value="S3"
+                label="S3 Bucket"
+                description="Choose a file from an existing S3 bucket. Ensure you have the correct permissions to access it."
+              />
             </Stack>
           </Radio.Group>
           {
@@ -633,6 +642,7 @@ const Create = observer(() => {
             </>
           }
 
+          <Divider mb={12} />
           <FormSectionTitle
             title="Details"
           />
@@ -662,7 +672,7 @@ const Create = observer(() => {
 
           <Select
             label="Access Group"
-            description="This is the Access Group that will manage your master object."
+            description="Access Group responsible for managing your master object."
             name="accessGroup"
             data={
               Object.keys(ingestStore.accessGroups || {}).map(groupName => (
@@ -689,7 +699,7 @@ const Create = observer(() => {
 
           <Select
             label="Library"
-            description={useMasterAsMez ? "This is the library where your master and mezzanine object will be created." : "This is the library where your master object will be created."}
+            description={useMasterAsMez ? "Select the library where your master and mezzanine object will be stored." : "Select the library where your master object will be stored."}
             name="masterLibrary"
             required={true}
             data={
@@ -707,6 +717,7 @@ const Create = observer(() => {
 
           { !useMasterAsMez && mezDetails }
 
+          <Divider mb={12} />
           <FormSectionTitle
             title="Playback Settings"
           />
@@ -742,7 +753,7 @@ const Create = observer(() => {
             <Box mb={16}>
               <Select
                 label="Mezzanine Content Type"
-                description="This will determine the type for the mezzanine object creation. Enter a valid object ID, version hash, or title."
+                description="Select a content type for the mezzanine object."
                 name="mezContentType"
                 required={true}
                 data={Object.keys(ingestStore.contentTypes || {}).map(typeId => (
