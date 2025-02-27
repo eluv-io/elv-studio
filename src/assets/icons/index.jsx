@@ -8,6 +8,7 @@ import CubePlusIcon from "@/assets/icons/CubePlusIcon.jsx";
 import EllipsisIcon from "@/assets/icons/EllipsisIcon.jsx";
 import ExclamationCircleIcon from "@/assets/icons/ExclamationCircleIcon.jsx";
 import ImageIcon from "@/assets/icons/ImageIcon.jsx";
+import JobsIcon from "@/assets/icons/JobsIcon.jsx";
 import MenuIcon from "@/assets/icons/MenuIcon.jsx";
 import UploadIcon from "@/assets/icons/UploadIcon.jsx";
 
@@ -22,6 +23,7 @@ export {
   EllipsisIcon,
   ExclamationCircleIcon,
   ImageIcon,
+  JobsIcon,
   MenuIcon,
   UploadIcon
 };

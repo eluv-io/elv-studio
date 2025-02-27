@@ -500,7 +500,7 @@ const Create = observer(() => {
 
                     <Stack justify="center" gap={0} align="center">
                       <Text c="elv-gray.7" size="xs" mb={2}>Drag a video or audio file</Text>
-                      <Button variant="transparent" p={0} h="fit-content" size="xs">Upload a File</Button>
+                      <Button variant="transparent" p={0} size="xs">Upload a File</Button>
                     </Stack>
                   </Flex>
                 </Dropzone>

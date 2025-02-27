@@ -18,10 +18,6 @@ const Jobs = observer(() => {
     direction: "asc"
   });
 
-  if(!ingestStore.jobs || Object.keys(ingestStore.jobs).length === 0) {
-    return <div className="page-container">No active jobs.</div>;
-  }
-
   const JobStatus = ({
     currentStep,
     uploadPercentage,
@@ -61,58 +57,57 @@ const Jobs = observer(() => {
 
   return (
     <PageContainer title="Ingest Jobs">
-      <div className="jobs">
-        <Button
-          onClick={() => setShowClearJobsDialog(true)}
-          mb={16}
-        >
-          Clear Inactive Jobs
-        </Button>
-        {
-          showClearJobsDialog &&
-          <ConfirmModal
-            title="Clear Jobs"
-            message="Are you sure you want to clear all inactive jobs? This action cannot be undone."
-            ConfirmCallback={() => ingestStore.ClearInactiveJobs}
-            show={showClearJobsDialog}
-            CloseCallback={() => setShowClearJobsDialog(false)}
-          />
-        }
-        <DataTable
-          withTableBorder
-          highlightOnHover
-          idAccessor="_objectId"
-          minHeight={!records || records.length === 0 ? 150 : 75}
-          records={records}
-          onRowClick={({record}) => {
-            navigate(record._objectId);
-          }}
-          sortStatus={sortStatus}
-          onSortStatusChange={setSortStatus}
-          rowClassName={() => styles.row}
-          columns={[
-            { accessor: "_title", title: "Name", sortable: true, render: record => <Text>{ record._title }</Text> },
-            { accessor: "_objectId", title: "Object ID", sortable: true, render: record => <Text>{ record._objectId }</Text> },
-            {
-              accessor: "_status",
-              title: "Status",
-              render: record => (
-                <Text>
-                  {
-                    JobStatus({
-                      uploadPercentage: record.upload?.percentage,
-                      currentStep: record.currentStep,
-                      estimatedTimeLeft: record.ingest?.estimatedTimeLeft,
-                      runState: record.finalize?.runState,
-                      error: record.error
-                    })
-                  }
-                </Text>
-              )
-            }
-          ]}
+      <Button
+        onClick={() => setShowClearJobsDialog(true)}
+        mb={16}
+        disabled={!ingestStore.jobs || Object.keys(ingestStore.jobs).length === 0}
+      >
+        Clear Inactive Jobs
+      </Button>
+      {
+        showClearJobsDialog &&
+        <ConfirmModal
+          title="Clear Jobs"
+          message="Are you sure you want to clear all inactive jobs? This action cannot be undone."
+          ConfirmCallback={() => ingestStore.ClearInactiveJobs()}
+          show={showClearJobsDialog}
+          CloseCallback={() => setShowClearJobsDialog(false)}
         />
-      </div>
+      }
+      <DataTable
+        withTableBorder
+        highlightOnHover
+        idAccessor="_objectId"
+        minHeight={!records || records.length === 0 ? 150 : 75}
+        records={records}
+        onRowClick={({record}) => {
+          navigate(record._objectId);
+        }}
+        sortStatus={sortStatus}
+        onSortStatusChange={setSortStatus}
+        rowClassName={() => styles.row}
+        columns={[
+          { accessor: "_title", title: "Name", sortable: true, render: record => <Text>{ record._title }</Text> },
+          { accessor: "_objectId", title: "Object ID", sortable: true, render: record => <Text>{ record._objectId }</Text> },
+          {
+            accessor: "_status",
+            title: "Status",
+            render: record => (
+              <Text>
+                {
+                  JobStatus({
+                    uploadPercentage: record.upload?.percentage,
+                    currentStep: record.currentStep,
+                    estimatedTimeLeft: record.ingest?.estimatedTimeLeft,
+                    runState: record.finalize?.runState,
+                    error: record.error
+                  })
+                }
+              </Text>
+            )
+          }
+        ]}
+      />
     </PageContainer>
   );
 });
