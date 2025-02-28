@@ -72,7 +72,7 @@ const JobDetailsCard = observer(({
   const TYPE_MAP = {
     "TEXT": <PlainText value={value} />,
     "LINK": <LinkText value={value} />,
-    "ACTION": <ActionText  LinkCallback={() => onClick()} value={value} />,
+    "ACTION": <ActionText onClick={() => onClick()} value={value} />,
     "COPY": <CopyText value={value} />
   };
 
