@@ -162,7 +162,7 @@ const theme = createTheme({
           })
         },
         label: {
-          "fontSize": "20px",
+          "fontSize": "16px",
           ...(params.active && {
             "color": "var(--mantine-color-elv-blue-3)"
           })
