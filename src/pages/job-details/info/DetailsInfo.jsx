@@ -1,8 +1,8 @@
 import {observer} from "mobx-react-lite";
 import {ingestStore} from "@/stores/index.js";
 import PrettyBytes from "pretty-bytes";
-import {ActionIcon, Box, CopyButton, Flex, Text, Tooltip} from "@mantine/core";
-import {CopyIcon} from "@/assets/icons/index.jsx";
+import {Box} from "@mantine/core";
+import DetailRow from "@/pages/job-details/common/DetailsCommon.jsx";
 
 const DetailsInfo = observer(({jobId}) => {
   const separateMasterMez = ingestStore.jobs[jobId].formData?.mez.newObject;
@@ -101,44 +101,13 @@ const DetailsInfo = observer(({jobId}) => {
         infoValues
           .filter(item => !item.hidden)
           .map(({label, value, copyable, indent, id}) => (
-            <Flex
+            <DetailRow
               key={`job-details-${id}`}
-              gap={8}
-              style={{marginLeft: indent ? "1.5rem" : 0, width: indent ? "calc(100% - 1.5rem)" : "100%"}}
-              mb={8}
-            >
-              <Text
-                fw={700}
-                fz={14}
-                pr="0.5rem"
-                wrap="no-wrap"
-                style={{whiteSpace: "nowrap"}}
-              >
-                { `${label}:` }
-              </Text>
-              <Text truncate="end" fz={14} fw={400}>{ value || "" }</Text>
-              {
-                copyable && value &&
-                <CopyButton value={value}>
-                  {({copied, copy}) => (
-                    <Tooltip
-                      label={copied ? "Copied" : "Copy"}
-                      withArrow
-                      position="right"
-                    >
-                      <ActionIcon
-                        onClick={copy}
-                        size="xs"
-                        variant="transparent"
-                        color="elv-gray.1"
-                      >
-                        <CopyIcon color="var(--mantine-color-elv-neutral-5)" />
-                      </ActionIcon>
-                    </Tooltip>
-                  )}
-                </CopyButton>
-              }
-            </Flex>
+              indent={indent}
+              label={label}
+              copyable={copyable}
+              value={value}
+            />
           ))
       }
     </Box>
