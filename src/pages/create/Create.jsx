@@ -655,7 +655,7 @@ const Create = observer(() => {
             <TextInput
               label="Display Title"
               name="displayTitle"
-              placeholder="Title"
+              placeholder="Enter a title"
               onChange={event => setDisplayTitle(event.target.value)}
               value={displayTitle}
               mb={16}

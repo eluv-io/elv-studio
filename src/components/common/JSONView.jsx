@@ -1,6 +1,6 @@
 import {ActionIcon, Box, Code} from "@mantine/core";
 import {CopyToClipboard} from "@/utils/helpers.js";
-import {CheckmarkIcon, ClipboardIcon} from "@/assets/icons/index.jsx";
+import {CheckmarkIcon, CopyIcon} from "@/assets/icons/index.jsx";
 import {useState} from "react";
 
 const JSONView = ({json, copyable=false}) => {
@@ -37,7 +37,7 @@ const JSONView = ({json, copyable=false}) => {
               >
                 {
                   copied ?
-                    <CheckmarkIcon width={14} /> : <ClipboardIcon />
+                    <CheckmarkIcon width={14} /> : <CopyIcon />
                 }
               </ActionIcon>
             )

@@ -1,6 +1,6 @@
 import CheckmarkIcon from "@/assets/icons/CheckmarkIcon.jsx";
 import CircleInfoIcon from "@/assets/icons/CircleInfoIcon.jsx";
-import ClipboardIcon from "@/assets/icons/ClipboardIcon.jsx";
+import CopyIcon from "@/assets/icons/CopyIcon.jsx";
 import CloseIcon from "@/assets/icons/CloseIcon.jsx";
 import CollapseIcon from "@/assets/icons/CollapseIcon.jsx";
 import CubeIcon from "@/assets/icons/CubeIcon.jsx";
@@ -15,9 +15,9 @@ import UploadIcon from "@/assets/icons/UploadIcon.jsx";
 export {
   CheckmarkIcon,
   CircleInfoIcon,
-  ClipboardIcon,
   CloseIcon,
   CollapseIcon,
+  CopyIcon,
   CubeIcon,
   CubePlusIcon,
   EllipsisIcon,

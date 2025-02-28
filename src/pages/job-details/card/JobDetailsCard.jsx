@@ -1,6 +1,6 @@
 import {ActionIcon, Anchor, Button, Flex, Text, Tooltip} from "@mantine/core";
 import {CopyToClipboard} from "@/utils/helpers.js";
-import {ClipboardIcon} from "@/assets/icons/index.jsx";
+import {CopyIcon} from "@/assets/icons/index.jsx";
 import {useState} from "react";
 import {observer} from "mobx-react-lite";
 import styles from "./JobDetailsCard.module.css";
@@ -49,7 +49,7 @@ const CopyText = ({value}) => {
             }, [3000]);
           }}
         >
-          <ClipboardIcon color="var(--mantine-color-elv-neutral-5)" />
+          <CopyIcon color="var(--mantine-color-elv-neutral-5)" />
         </ActionIcon>
       </Tooltip>
     </Flex>

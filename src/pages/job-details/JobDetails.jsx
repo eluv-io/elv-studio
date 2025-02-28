@@ -1,71 +1,23 @@
 import {useEffect, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import {observer} from "mobx-react-lite";
-import PrettyBytes from "pretty-bytes";
 
-import {ingestStore, rootStore} from "@/stores";
-import {CheckmarkIcon, ClipboardIcon, ExclamationCircleIcon} from "@/assets/icons";
+import {ingestStore} from "@/stores";
+import {ExclamationCircleIcon} from "@/assets/icons";
 import Dialog from "@/components/common/Dialog";
 import JSONView from "@/components/common/JSONView";
 import {
-  ActionIcon,
   Alert,
   Box,
   Button,
-  CopyButton,
   Flex,
-  Loader,
-  Text,
-  Title,
-  Tooltip
+  Loader
 } from "@mantine/core";
 import styles from "./JobDetails.module.css";
 import PageContainer from "@/components/page-container/PageContainer.jsx";
-import TextCard from "@/components/text-card/TextCard.jsx";
-import JobDetailsCard from "@/pages/job-details/card/JobDetailsCard.jsx";
-
-const OpenObjectLink = ({libraryId, objectId}) => {
-  rootStore.client.SendMessage({
-    options: {
-      operation: "OpenLink",
-      libraryId,
-      objectId
-    },
-    noResponse: true
-  });
-};
-
-const FinalizeInfo = observer(({jobId}) => {
-  if(!ingestStore.jobs[jobId].finalize.mezzanineHash) { return null; }
-
-  return (
-    <>
-      <Title order={5} mt={16} mb={16}>Mezzanine Object Details</Title>
-      <JobDetailsCard
-        label="Hash"
-        value={ingestStore.jobs[jobId].finalize.mezzanineHash}
-        secondary
-        type="COPY"
-      />
-      <JobDetailsCard
-        label="ID"
-        value={ingestStore.jobs[jobId].finalize.objectId}
-        secondary
-        type="ACTION"
-        onClick={() => OpenObjectLink({
-          libraryId: ingestStore.jobs[jobId].formData?.mez.libraryId,
-          objectId: ingestStore.jobs[jobId].finalize.objectId
-        })}
-      />
-      <JobDetailsCard
-        label="Embeddable URL"
-        value={ingestStore.jobs[jobId].embedUrl}
-        secondary
-        type="LINK"
-      />
-    </>
-  );
-});
+import DetailsProgress from "@/pages/job-details/progress/DetailsProgress.jsx";
+import DetailsInfo from "@/pages/job-details/info/DetailsInfo.jsx";
+import DetailsFinalizeInfo from "@/pages/job-details/finalize-info/DetailsFinalizeInfo.jsx";
 
 const ErrorNotification = observer(({jobId, setShowErrorDialog}) => {
   if(!ingestStore.jobs[jobId].error) { return null; }
@@ -112,150 +64,6 @@ const ErrorDialog = observer(({jobId, showErrorDialog, setShowErrorDialog}) => {
     </Dialog>
   );
 });
-
-const JobInfo = ({jobId}) => {
-  const separateMasterMez = ingestStore.jobs[jobId].formData?.mez.newObject;
-
-  const idPrefix = separateMasterMez ? "master" : "master-mez";
-
-  const masterValues = [
-    {
-      label: separateMasterMez ? "Master" : "Master + Mezzanine",
-      id: `${idPrefix}-header`,
-      value: ""
-    },
-    {
-      label: "ID",
-      id: `${idPrefix}-id`,
-      value: jobId,
-      indent: true
-    },
-    {
-      label: "Library ID",
-      id: `${idPrefix}-library-id`,
-      value: ingestStore.jobs[jobId].masterLibraryId || "",
-      indent: true
-    },
-    {
-      label: "Write Token",
-      id: `${idPrefix}-write-token`,
-      value: ingestStore.jobs[jobId].masterWriteToken || "",
-      copyable: true,
-      indent: true
-    },
-    {
-      label: "Node URL",
-      id: `${idPrefix}-node-url`,
-      value: ingestStore.jobs[jobId].masterNodeUrl || "",
-      indent: true
-    }
-  ];
-
-  const mezValues = [
-    {
-      label: "Mezzanine",
-      id: "mez-header",
-      value: ""
-    },
-    {
-      label: "ID",
-      id: "mez-id",
-      value: ingestStore.jobs[jobId].mezObjectId || "",
-      indent: true
-    },
-    {
-      label: "Library ID",
-      id: "mez-library-id",
-      value: ingestStore.jobs[jobId].mezLibraryId || "",
-      indent: true
-    },
-    {
-      label: "Write Token",
-      id: "mez-write-token",
-      value: ingestStore.jobs[jobId].mezWriteToken || "",
-      copyable: true,
-      indent: true
-    },
-    {
-      label: "Node URL",
-      id: "mez-node-url",
-      value: ingestStore.jobs[jobId].mezNodeUrl || "",
-      indent: true,
-      hidden: !ingestStore.jobs[jobId].mezNodeUrl
-    }
-  ];
-
-  let infoValues = [
-    {
-      label: "Name",
-      id: "object-name",
-      value: ingestStore.jobs[jobId].formData?.master.title
-    },
-    {
-      label: "Total File Size",
-      id: "object-total-size",
-      value: PrettyBytes(ingestStore.jobs[jobId].size || 0),
-      hidden: ingestStore.jobs[jobId].size === undefined
-    },
-    {
-      label: "Content Type",
-      id: "object-content-type",
-      value: ingestStore.jobs[jobId].contentType || ""
-    },
-    ...masterValues
-  ];
-
-  if(separateMasterMez) {
-    infoValues = infoValues.concat(mezValues);
-  }
-
-  return (
-    <Box w="100%">
-      {
-        infoValues
-          .filter(item => !item.hidden)
-          .map(({label, value, copyable, indent, id}) => (
-            <Flex
-              key={`job-details-${id}`}
-              gap={8}
-              style={{marginLeft: indent ? "1.5rem" : 0, width: indent ? "calc(100% - 1.5rem)" : "100%"}}
-            >
-              <Text
-                fw={500}
-                pr="0.5rem"
-                wrap="no-wrap"
-                style={{whiteSpace: "nowrap"}}
-              >
-                { `${label}:` }
-              </Text>
-              <Text truncate="end">{ value || "" }</Text>
-              {
-                copyable && value &&
-                <CopyButton value={value}>
-                  {({copied, copy}) => (
-                    <Tooltip
-                      label={copied ? "Copied" : "Copy"}
-                      withArrow
-                      position="right"
-                    >
-                      <ActionIcon
-                        onClick={copy}
-                        size="xs"
-                        variant="transparent"
-                        color="elv-gray.1"
-                      >
-                        <ClipboardIcon color="var(--mantine-color-elv-neutral-5)" />
-                      </ActionIcon>
-                    </Tooltip>
-                  )}
-                </CopyButton>
-              }
-            </Flex>
-          ))
-      }
-    </Box>
-  );
-};
 
 const JobDetails = observer(() => {
   const [showErrorDialog, setShowErrorDialog] = useState(false);
@@ -320,81 +128,22 @@ const JobDetails = observer(() => {
 
   if(!ingestStore.job) { return <Loader />; }
 
-  const iconProps = {
-    width: 20,
-    height: 20
-  };
-
   return (
     <PageContainer
-      title={`Details for ${ingestStore.jobs[jobId].formData?.master.title || jobId}`}
-      width="725px"
-      actions={[
-        {
-          label: "Back",
-          variant: "filled",
-          onClick: () => navigate("/jobs")
-        }
-      ]}
+      title={ingestStore.jobs[jobId].formData?.master.title || jobId}
+      width="810px"
       BackLinkCallback={() => navigate("/jobs")}
     >
-      <div className="job-details">
-        <JobInfo jobId={jobId} />
+      <DetailsInfo jobId={jobId} />
+      <DetailsProgress jobId={jobId} />
+      <DetailsFinalizeInfo jobId={jobId} />
 
-        <Title order={5} mt={16} mb={16}>Progress Details</Title>
-
-        <TextCard
-          title="Uploading"
-          message={
-            ["finished", "failed"].includes(ingestStore.jobs[jobId].upload.runState) ? null : `${ingestStore.jobs[jobId].upload.percentage || 0}%`
-          }
-          rightSection={
-            ingestStore.jobs[jobId].upload.runState === "failed" ?
-              <Text c="elv-red.4">
-                Failed
-              </Text> :
-              ingestStore.jobs[jobId].upload.runState === "finished" ?
-                <CheckmarkIcon {...iconProps} /> : <Loader size={20} />
-          }
-        />
-
-        <TextCard
-          title="Converting to streaming format"
-          message={
-            ingestStore.jobs[jobId].ingest.runState === "failed" ? "" : ingestStore.jobs[jobId].ingest.estimatedTimeLeft || ""
-          }
-          rightSection={
-            ingestStore.jobs[jobId].ingest.runState === "failed" ?
-              <Text c="elv-red.4">
-                Failed
-              </Text> :
-              ["ingest", "finalize"].includes(ingestStore.jobs[jobId].currentStep) &&
-              (
-                ingestStore.jobs[jobId].ingest.runState === "finished" ? <CheckmarkIcon {...iconProps} /> : <Loader size={20} />
-              )
-          }
-        />
-
-        <TextCard
-          title="Finalizing"
-          rightSection={
-            ingestStore.jobs[jobId].finalize.runState === "failed" ?
-              <Text c="elv-red.4">
-                Failed
-              </Text> :
-              ingestStore.jobs[jobId].currentStep === "finalize" &&
-              <CheckmarkIcon {...iconProps} />
-          }
-        />
-
-        <FinalizeInfo jobId={jobId} />
-        <ErrorNotification jobId={jobId} setShowErrorDialog={setShowErrorDialog} />
-        <ErrorDialog
-          jobId={jobId}
-          showErrorDialog={showErrorDialog}
-          setShowErrorDialog={setShowErrorDialog}
-        />
-      </div>
+      <ErrorNotification jobId={jobId} setShowErrorDialog={setShowErrorDialog} />
+      <ErrorDialog
+        jobId={jobId}
+        showErrorDialog={showErrorDialog}
+        setShowErrorDialog={setShowErrorDialog}
+      />
     </PageContainer>
   );
 });
