@@ -4,14 +4,13 @@ import {observer} from "mobx-react-lite";
 
 import {ingestStore} from "@/stores";
 import {ExclamationCircleIcon} from "@/assets/icons";
-import Dialog from "@/components/common/Dialog";
 import JSONView from "@/components/common/JSONView";
 import {
   Alert,
   Box,
   Button,
   Flex,
-  Loader
+  Loader, Modal
 } from "@mantine/core";
 import styles from "./JobDetails.module.css";
 import PageContainer from "@/components/page-container/PageContainer.jsx";
@@ -52,16 +51,24 @@ const ErrorDialog = observer(({jobId, showErrorDialog, setShowErrorDialog}) => {
   if(!showErrorDialog) { return null; }
 
   return (
-    <Dialog
-      open={showErrorDialog}
-      onOpenChange={() => setShowErrorDialog(false)}
+    <Modal
+      opened={showErrorDialog}
+      onClose={() => setShowErrorDialog(false)}
       title={`Error Log for ${ingestStore.jobs[jobId].formData?.master.title || jobId}`}
       hideCancelButton={true}
-      confirmText="Close"
       size="MD"
     >
       <JSONView json={ingestStore.jobs[jobId].errorLog} copyable={true} />
-    </Dialog>
+
+      <Flex mt="1.5rem" justify="flex-end">
+        <Button
+          variant="filled"
+          onClick={() => setShowErrorDialog(false)}
+        >
+          Close
+        </Button>
+      </Flex>
+    </Modal>
   );
 });
 
