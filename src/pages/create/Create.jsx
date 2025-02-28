@@ -116,21 +116,21 @@ const Create = observer(() => {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState(null);
 
-  const [masterObjectId, setMasterObjectId] = useState();
+  const [masterObjectId, setMasterObjectId] = useState("");
   const [uploadMethod, setUploadMethod] = useState("LOCAL");
   const [files, setFiles] = useState([]);
 
-  const [abrProfile, setAbrProfile] = useState();
-  const [masterLibrary, setMasterLibrary] = useState();
-  const [accessGroup, setAccessGroup] = useState();
-  const [name, setName] = useState();
-  const [description, setDescription] = useState();
+  const [abrProfile, setAbrProfile] = useState(null);
+  const [masterLibrary, setMasterLibrary] = useState("");
+  const [accessGroup, setAccessGroup] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [permission, setPermission] = useState("editable");
 
-  const [mezLibrary, setMezLibrary] = useState();
+  const [mezLibrary, setMezLibrary] = useState("");
   const [mezContentType, setMezContentType] = useState("");
 
-  const [displayTitle, setDisplayTitle] = useState();
+  const [displayTitle, setDisplayTitle] = useState("");
   const [playbackEncryption, setPlaybackEncryption] = useState("");
   const [useMasterAsMez, setUseMasterAsMez] = useState(true);
 
@@ -140,12 +140,12 @@ const Create = observer(() => {
   const [disableDrmRestricted, setDisableDrmRestricted] = useState(true);
   const [disableClear, setDisableClear] = useState(true);
 
-  const [s3Url, setS3Url] = useState();
-  const [s3Region, setS3Region] = useState();
-  const [s3AccessKey, setS3AccessKey] = useState();
-  const [s3Secret, setS3Secret] = useState();
+  const [s3Url, setS3Url] = useState("");
+  const [s3Region, setS3Region] = useState("");
+  const [s3AccessKey, setS3AccessKey] = useState("");
+  const [s3Secret, setS3Secret] = useState("");
   const [s3Copy, setS3Copy] = useState(false);
-  const [s3PresignedUrl, setS3PresignedUrl] = useState();
+  const [s3PresignedUrl, setS3PresignedUrl] = useState("");
   const [s3UseAKSecret, setS3UseAKSecret] = useState(false);
 
   const ENCRYPTION_OPTIONS = [

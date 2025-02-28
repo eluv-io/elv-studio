@@ -4,20 +4,45 @@ import FormSectionTitle from "@/components/form-section-title/FormSectionTitle.j
 import TextCard from "@/components/text-card/TextCard.jsx";
 import {ingestStore} from "@/stores/index.js";
 import {CheckmarkIcon} from "@/assets/icons/index.jsx";
+import styles from "./DetailsProgress.module.css";
+
+// TODO: Revamp each item without requiring a percentage value
+// const ProgressItem = observer(({label, percentage, rightSection}) => {
+//   return (
+//     <Box w="100%" mb={20}>
+//       <Grid>
+//         <Grid.Col span={4}>
+//           <Text fw={500} fz={16}>
+//             { label }
+//           </Text>
+//         </Grid.Col>
+//         <Grid.Col span={8}>
+//           <Group>
+//             <Progress value={percentage} w={390} />
+//             {
+//               rightSection ?
+//                 (
+//                   <Flex ml={36} align="center">
+//                     { rightSection }
+//                   </Flex>
+//                 ) :
+//                 null
+//             }
+//           </Group>
+//         </Grid.Col>
+//       </Grid>
+//     </Box>
+//   );
+// });
 
 const DetailsProgress = observer(({jobId}) => {
-  const iconProps = {
-    width: 20,
-    height: 20
-  };
-
   return (
     <>
       <Divider mb={12} />
       <FormSectionTitle title="Progress" />
 
       <TextCard
-        title="Uploading"
+        title="Upload"
         message={
           ["finished", "failed"].includes(ingestStore.jobs[jobId].upload.runState) ? null : `${ingestStore.jobs[jobId].upload.percentage || 0}%`
         }
@@ -27,12 +52,12 @@ const DetailsProgress = observer(({jobId}) => {
               Failed
             </Text> :
             ingestStore.jobs[jobId].upload.runState === "finished" ?
-              <CheckmarkIcon {...iconProps} /> : <Loader size={20} />
+              <CheckmarkIcon className={styles.itemIcon} /> : <Loader size={20} />
         }
       />
 
       <TextCard
-        title="Converting to streaming format"
+        title="Convert to streaming format"
         message={
           ingestStore.jobs[jobId].ingest.runState === "failed" ? "" : ingestStore.jobs[jobId].ingest.estimatedTimeLeft || ""
         }
@@ -43,20 +68,20 @@ const DetailsProgress = observer(({jobId}) => {
             </Text> :
             ["ingest", "finalize"].includes(ingestStore.jobs[jobId].currentStep) &&
             (
-              ingestStore.jobs[jobId].ingest.runState === "finished" ? <CheckmarkIcon {...iconProps} /> : <Loader size={20} />
+              ingestStore.jobs[jobId].ingest.runState === "finished" ? <CheckmarkIcon className={styles.itemIcon} /> : <Loader size={20} />
             )
         }
       />
 
       <TextCard
-        title="Finalizing"
+        title="Finalize"
         rightSection={
           ingestStore.jobs[jobId].finalize.runState === "failed" ?
             <Text c="elv-red.4">
               Failed
             </Text> :
             ingestStore.jobs[jobId].currentStep === "finalize" &&
-            <CheckmarkIcon {...iconProps} />
+            <CheckmarkIcon className={styles.itemIcon} />
         }
       />
     </>
