@@ -6,11 +6,11 @@ import PrettyBytes from "pretty-bytes";
 import {ingestStore, tenantStore, rootStore} from "@/stores";
 import {s3Regions} from "@/utils";
 import {abrProfileClear, abrProfileBoth} from "@/utils/ABR";
-import {CloseIcon, ExclamationCircleIcon, UploadIcon} from "@/assets/icons";
+import {CircleInfoIcon, CloseIcon, ExclamationCircleIcon, UploadIcon} from "@/assets/icons";
 
 import PageContainer from "@/components/page-container/PageContainer.jsx";
 import FabricLoader from "@/components/FabricLoader";
-import AdvancedSection from "@/pages/create/advanced-section/AdvancedSection.jsx";
+import styles from "./Create.module.css";
 
 import {
   Box,
@@ -25,9 +25,8 @@ import {
   Text,
   ActionIcon,
   Group,
-  Divider
+  Divider, UnstyledButton, SimpleGrid, Tooltip
 } from "@mantine/core";
-import AdvancedSelect from "@/components/advanced-select/AdvancedSelect.jsx";
 import FormSectionTitle from "@/components/form-section-title/FormSectionTitle.jsx";
 import {Dropzone} from "@mantine/dropzone";
 
@@ -45,31 +44,28 @@ const Permissions = ({permission, setPermission}) => {
   const permissionLevels = rootStore.client.permissionLevels;
 
   return (
-    <Box mb={16}>
-      <Select
-        label="Permission"
-        description="Content object permission level."
-        tooltip={
-          Object.values(rootStore.client.permissionLevels).map(({short, description}) =>
-            <div key={`permission-info-${short}`} className="form__permission-tooltip-item">
-              <div className="form__permission-tooltip-title">{ short }:</div>
-              <div>{ description }</div>
-            </div>
-          )
-        }
-        value={permission}
-        onChange={value => setPermission(value)}
-        data={
-          Object.keys(permissionLevels || []).map(permissionName => (
-            {
-              label: permissionLevels[permissionName].short,
-              value: permissionName
-            }
-          ))
-        }
-        mt={16}
-      />
-    </Box>
+    <Select
+      label="Permission"
+      description="Content object permission level."
+      tooltip={
+        Object.values(rootStore.client.permissionLevels).map(({short, description}) =>
+          <div key={`permission-info-${short}`} className="form__permission-tooltip-item">
+            <div className="form__permission-tooltip-title">{ short }:</div>
+            <div>{ description }</div>
+          </div>
+        )
+      }
+      value={permission}
+      onChange={value => setPermission(value)}
+      data={
+        Object.keys(permissionLevels || []).map(permissionName => (
+          {
+            label: permissionLevels[permissionName].short,
+            value: permissionName
+          }
+        ))
+      }
+    />
   );
 };
 
@@ -151,8 +147,6 @@ const Create = observer(() => {
   const [s3Copy, setS3Copy] = useState(false);
   const [s3PresignedUrl, setS3PresignedUrl] = useState();
   const [s3UseAKSecret, setS3UseAKSecret] = useState(false);
-
-  const [useAdvancedSettings, setUseAdvancedSettings] = useState(false);
 
   const ENCRYPTION_OPTIONS = [
     {value: "drm-public", label: "DRM - Public Access", disabled: disableDrmPublic, description: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128"},
@@ -430,12 +424,11 @@ const Create = observer(() => {
   }
 
   return (
-    <PageContainer title="Ingest New Video on Demand" width="750px" error={error}>
+    <PageContainer title="Create" error={error}>
       <FabricLoader>
-        <form onSubmit={HandleSubmit}>
-          <FormSectionTitle title="Source" />
+        <form onSubmit={HandleSubmit} className={styles.form}>
+          <FormSectionTitle title="Upload New Media" />
           <Radio.Group
-            label="Upload Method"
             name="uploadMethod"
             value={uploadMethod}
             onChange={value => setUploadMethod(value)}
@@ -482,7 +475,7 @@ const Create = observer(() => {
                   }}
                   mb={16}
                 >
-                  <Flex p="65 70" direction="column" justify="center">
+                  <Flex p="65 70" direction="column" justify="center" gap={0}>
                     <Flex justify="center" mb={4}>
                       <Dropzone.Accept>
                         <UploadIcon />
@@ -494,13 +487,15 @@ const Create = observer(() => {
                         />
                       </Dropzone.Reject>
                       <Dropzone.Idle>
-                        <UploadIcon color="elv-gray.3" />
+                        <UploadIcon color="elv-neutral.4" />
                       </Dropzone.Idle>
                     </Flex>
 
                     <Stack justify="center" gap={0} align="center">
-                      <Text c="elv-gray.7" size="xs" mb={2}>Drag a video or audio file</Text>
-                      <Button variant="transparent" p={0} size="xs">Upload a File</Button>
+                      <Text c="elv-gray.9" fz={12} fw={400} mb={0}>Drag and drop a video or audio file</Text>
+                      <UnstyledButton variant="transparent" p={0} size="xs" h={15}>
+                        <Text fz={12} c="elv-blue.6">Upload a File</Text>
+                      </UnstyledButton>
                     </Stack>
                   </Flex>
                 </Dropzone>
@@ -644,48 +639,59 @@ const Create = observer(() => {
 
           <Divider mb={12} />
           <FormSectionTitle
-            title="Details"
+            title="General"
           />
 
-          <TextInput
-            label="Name"
-            name="name"
-            onChange={event => setName(event.target.value)}
-            value={name}
-            mb={16}
-            required
-          />
+          <SimpleGrid cols={2} spacing={150}>
+            <TextInput
+              label="Name"
+              name="name"
+              placeholder="Enter content name"
+              onChange={event => setName(event.target.value)}
+              value={name}
+              mb={16}
+              required
+            />
+            <TextInput
+              label="Display Title"
+              name="displayTitle"
+              placeholder="Title"
+              onChange={event => setDisplayTitle(event.target.value)}
+              value={displayTitle}
+              mb={16}
+            />
+          </SimpleGrid>
+
           <TextInput
             label="Description"
             name="description"
+            placeholder="Enter a description"
+            description="Enter a description to provide more details and context."
             onChange={event => setDescription(event.target.value)}
             value={description}
             mb={16}
           />
-          <TextInput
-            label="Display Title"
-            name="displayTitle"
-            onChange={event => setDisplayTitle(event.target.value)}
-            value={displayTitle}
-            mb={16}
-          />
 
-          <Select
-            label="Access Group"
-            description="Access Group responsible for managing your master object."
-            name="accessGroup"
-            data={
-              Object.keys(ingestStore.accessGroups || {}).map(groupName => (
-                {value: groupName, label: groupName}
-              ))
-            }
-            placeholder="Select Access Group"
-            value={accessGroup}
-            onChange={(value) => setAccessGroup(value)}
-            allowDeselect={false}
-            mb={16}
-          />
-
+          <SimpleGrid cols={2} spacing={150}>
+            <Select
+              label="Library"
+              description={useMasterAsMez ? "Select the library where your master and mezzanine object will be stored." : "Select the library where your master object will be stored."}
+              name="masterLibrary"
+              required={true}
+              data={
+                Object.keys(ingestStore.libraries || {}).map(libraryId => (
+                  {
+                    label: ingestStore.libraries[libraryId].name || "",
+                    value: libraryId
+                  }
+                ))
+              }
+              placeholder="Select Library"
+              onChange={value => setMasterLibrary(value)}
+              mb={16}
+            />
+            { !useMasterAsMez && mezDetails }
+          </SimpleGrid>
           <Checkbox
             label="Use Master Object as Mezzanine Object"
             checked={useMasterAsMez}
@@ -697,36 +703,88 @@ const Create = observer(() => {
             mb={16}
           />
 
-          <Select
-            label="Library"
-            description={useMasterAsMez ? "Select the library where your master and mezzanine object will be stored." : "Select the library where your master object will be stored."}
-            name="masterLibrary"
-            required={true}
-            data={
-              Object.keys(ingestStore.libraries || {}).map(libraryId => (
-                {
-                  label: ingestStore.libraries[libraryId].name || "",
-                  value: libraryId
-                }
-              ))
-            }
-            placeholder="Select Library"
-            onChange={value => setMasterLibrary(value)}
-            mb={16}
-          />
-
-          { !useMasterAsMez && mezDetails }
+          <SimpleGrid cols={2} spacing={150}>
+            <Select
+              label="Mezzanine Content Type"
+              description="Select a content type for the mezzanine object."
+              name="mezContentType"
+              required={true}
+              data={Object.keys(ingestStore.contentTypes || {}).map(typeId => (
+                {value: typeId, label: ingestStore.contentTypes[typeId].name}
+              ))}
+              placeholder="Select Content Type"
+              value={mezContentType}
+              onChange={value => setMezContentType(value)}
+              mb={16}
+            />
+          </SimpleGrid>
 
           <Divider mb={12} />
           <FormSectionTitle
-            title="Playback Settings"
+            title="Access"
           />
 
-          <AdvancedSelect
-            value={playbackEncryption}
-            SetValue={setPlaybackEncryption}
-            options={ENCRYPTION_OPTIONS}
+          <SimpleGrid cols={2} spacing={150}>
+            <Select
+              label="Access Group"
+              description="The Access Group that will manage your master object."
+              name="accessGroup"
+              data={
+                Object.keys(ingestStore.accessGroups || {}).map(groupName => (
+                  {value: groupName, label: groupName}
+                ))
+              }
+              placeholder="Select Access Group"
+              value={accessGroup}
+              onChange={(value) => setAccessGroup(value)}
+              allowDeselect={false}
+              mb={16}
+            />
+            <Permissions permission={permission} setPermission={setPermission} />
+          </SimpleGrid>
+
+          <Divider mb={12} />
+          <FormSectionTitle
+            title="Playback & Streaming"
           />
+
+          <SimpleGrid cols={2} spacing={150}>
+            <Select
+              description="Select a playback encryption option. Enable Clear or Digital Rights Management (DRM) copy protection during playback."
+              name="encryption"
+              data={ENCRYPTION_OPTIONS}
+              placeholder="Select Encryption"
+              mb={16}
+              value={playbackEncryption}
+              onChange={value => setPlaybackEncryption(value)}
+              label={
+                <Flex align="center" gap={6}>
+                  Playback Encryption
+                  <Tooltip
+                    multiline
+                    w={460}
+                    label={
+                      ENCRYPTION_OPTIONS.map(({label, title, id}) =>
+                        <Flex
+                          key={`encryption-info-${id}`}
+                          gap="1rem"
+                          lh={1.25}
+                          pb={5}
+                        >
+                          <Flex flex="0 0 35%">{label}:</Flex>
+                          <Text fz="sm">{title}</Text>
+                        </Flex>
+                      )
+                    }
+                  >
+                    <Flex w={16}>
+                      <CircleInfoIcon color="var(--mantine-color-elv-gray-8)"/>
+                    </Flex>
+                  </Tooltip>
+                </Flex>
+              }
+            />
+          </SimpleGrid>
 
           {
             playbackEncryption === "custom" &&
@@ -743,28 +801,6 @@ const Create = observer(() => {
               mb={16}
             />
           }
-
-          <AdvancedSection
-            useAdvancedSettings={useAdvancedSettings}
-            setUseAdvancedSettings={setUseAdvancedSettings}
-          >
-            <Permissions permission={permission} setPermission={setPermission} />
-
-            <Box mb={16}>
-              <Select
-                label="Mezzanine Content Type"
-                description="Select a content type for the mezzanine object."
-                name="mezContentType"
-                required={true}
-                data={Object.keys(ingestStore.contentTypes || {}).map(typeId => (
-                  {value: typeId, label: ingestStore.contentTypes[typeId].name}
-                ))}
-                placeholder="Select Content Type"
-                value={mezContentType}
-                onChange={event => setMezContentType(event.target.value)}
-              />
-            </Box>
-          </AdvancedSection>
 
           <Button
             type="submit"

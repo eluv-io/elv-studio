@@ -15,7 +15,7 @@ const theme = createTheme({
       "#228be6", // eluvio color
       "#3f85e3", // eluvio color
       "#336be4", // eluvio color
-      "#2361e3",
+      "#2b6cfb", // eluvio color
       "#1351cb",
       "#0648b6",
       "#003ea2"
@@ -129,7 +129,7 @@ const theme = createTheme({
         root: {
           border: "none",
           borderRadius: "5px",
-          backgroundImage: "url(\"data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='6' ry='6' stroke='%23380c61' stroke-width='2' stroke-dasharray='6%2c 14' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e\")"
+          backgroundImage: "url(\"data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='4.5' stroke='%2334065F' stroke-width='2' stroke-dasharray='9%2c 9' stroke-dashoffset='0' stroke-linecap='round'/%3e%3c/svg%3e\")"
         }
       })
     },

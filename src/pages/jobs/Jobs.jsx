@@ -87,7 +87,7 @@ const Jobs = observer(() => {
         onSortStatusChange={setSortStatus}
         rowClassName={() => styles.row}
         columns={[
-          { accessor: "_title", title: "Name", sortable: true, render: record => <Text>{ record._title }</Text> },
+          { accessor: "_title", title: "Name", sortable: true, render: record => <Text fw={600} lineClamp={1} fz="sm">{ record._title }</Text> },
           { accessor: "_objectId", title: "Object ID", sortable: true, render: record => <Text>{ record._objectId }</Text> },
           {
             accessor: "_status",
