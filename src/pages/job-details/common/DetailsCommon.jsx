@@ -38,6 +38,7 @@ export const DetailRow = ({
   value,
   copyable,
   onClick,
+  clickTitle,
   href,
   Icon,
   mb=8
@@ -56,7 +57,7 @@ export const DetailRow = ({
     (
       clipboard.copied ? "Copied" : "Copy"
     ) :
-    label;
+    (clickTitle || label);
 
   if(copyable) {
     Icon = <CopyIcon color="var(--mantine-color-elv-neutral-5)" />;

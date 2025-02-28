@@ -31,7 +31,8 @@ const DetailsFinalizeInfo = observer(({jobId}) => {
       onClick: () => OpenObjectLink({
         libraryId: ingestStore.jobs[jobId].formData?.mez.libraryId,
         objectId: ingestStore.jobs[jobId].finalize.objectId
-      })
+      }),
+      clickTitle: "Open in Fabric Browser"
     },
     {
       label: "Embeddable URL",
@@ -45,13 +46,14 @@ const DetailsFinalizeInfo = observer(({jobId}) => {
       <Divider mb={12} />
       <FormSectionTitle title="Mezzanine Object Details" />
       {
-        VALUES.map(({label, value, copyable, onClick, href}) => (
+        VALUES.map(({label, value, copyable, onClick, href, clickTitle}) => (
           <DetailRow
             key={`row-${label}-${value}`}
             label={label}
             value={value}
             copyable={copyable}
             onClick={onClick}
+            clickTitle={clickTitle}
             href={href}
           />
         ))
