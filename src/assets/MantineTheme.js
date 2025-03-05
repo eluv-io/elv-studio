@@ -1,9 +1,31 @@
-import {createTheme} from "@mantine/core";
+import {createTheme, rem} from "@mantine/core";
 
 const theme = createTheme({
-  fontFamily: "Helvetica Neue, Helvetica, sans-serif",
+  fontFamily: "Inter, Helvetica Neue, helvetica, sans-serif",
   headings: {
-    fontFamily: "Helvetica Neue, Helvetica, sans-serif"
+    fontFamily: "Inter, Helvetica Neue, helvetica, sans-serif",
+    sizes: {
+      h1: {
+        fontSize: rem(22),
+        fontWeight: 600
+      },
+      h2: {
+        fontSize: rem(18),
+        fontWeight: 600,
+      },
+      h3: {
+        fontSize: rem(14),
+        fontWeight: 700
+      },
+      h4: {
+        fontSize: rem(14),
+        fontWeight: 500
+      },
+      h6: {
+        fontSize: rem(12),
+        fontWeight: 500
+      }
+    }
   },
   primaryColor: "elv-blue",
   primaryShade: 5,

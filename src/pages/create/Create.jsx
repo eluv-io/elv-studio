@@ -25,7 +25,10 @@ import {
   Text,
   ActionIcon,
   Group,
-  Divider, UnstyledButton, SimpleGrid, Tooltip
+  Divider,
+  UnstyledButton,
+  SimpleGrid,
+  Tooltip
 } from "@mantine/core";
 import FormSectionTitle from "@/components/form-section-title/FormSectionTitle.jsx";
 import {Dropzone} from "@mantine/dropzone";
