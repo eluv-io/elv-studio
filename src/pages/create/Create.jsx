@@ -431,6 +431,8 @@ const Create = observer(() => {
             uploadMethod === "LOCAL" &&
               <>
                 <Dropzone
+                  accept={{"audio/*": [], "video/*": [], "application/mxf": []}}
+                  id="main-dropzone"
                   onDrop={files => setFiles(files)}
                   onReject={fileRejections => {
                     const fileObjects = fileRejections.map(item => (
@@ -441,7 +443,6 @@ const Create = observer(() => {
                     ));
                     setFiles(fileObjects);
                   }}
-                  accept={{"audio/*": [], "video/*": []}}
                   multiple={false}
                   validator={(file) => {
                     if(file.size === 0) {
