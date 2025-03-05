@@ -28,7 +28,7 @@ import {
   Divider,
   UnstyledButton,
   SimpleGrid,
-  Tooltip
+  Tooltip, Title
 } from "@mantine/core";
 import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 import {Dropzone} from "@mantine/dropzone";
@@ -152,11 +152,11 @@ const Create = observer(() => {
   const [s3UseAKSecret, setS3UseAKSecret] = useState(false);
 
   const ENCRYPTION_OPTIONS = [
-    {value: "drm-public", label: "DRM - Public Access", disabled: disableDrmPublic, description: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128"},
-    {value: "drm-all", label: "DRM - All Formats", disabled: disableDrmAll, description: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128, HLS Fairplay, HLS Widevine, HLS PlayReady"},
-    {value: "drm-restricted", label: "DRM - Widevine and Fairplay", disabled: disableDrmRestricted, description: "Playout Formats: Dash Widevine, HLS Fairplay"},
-    {value: "clear", label: "Clear", disabled: disableClear},
-    {value: "custom", label: "Custom"}
+    {value: "drm-public", label: "DRM - Public Access", disabled: disableDrmPublic, title: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128"},
+    {value: "drm-all", label: "DRM - All Formats", disabled: disableDrmAll, title: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128, HLS Fairplay, HLS Widevine, HLS PlayReady"},
+    {value: "drm-restricted", label: "DRM - Widevine and Fairplay", disabled: disableDrmRestricted, title: "Playout Formats: Dash Widevine, HLS Fairplay"},
+    {value: "clear", label: "Clear", disabled: disableClear, title: "Playout Formats - HLS Clear, Dash Clear"},
+    {value: "custom", label: "Custom", title: "Define a custom ABR profile"}
   ];
 
   useEffect(() => {
@@ -229,29 +229,6 @@ const Create = observer(() => {
       });
     }
   }, [playbackEncryption]);
-
-  const mezDetails = (
-    <>
-      <Select
-        label="Mezzanine Library"
-        description="This is the library where your mezzanine object will be created."
-        name="mezLibrary"
-        required={true}
-        data={
-          Object.keys(ingestStore.libraries || {}).map(libraryId => (
-            {
-              label: ingestStore.libraries[libraryId].name || "",
-              value: libraryId
-            }
-          ))
-        }
-        placeholder="Select Library"
-        onChange={value => setMezLibrary(value)}
-        value={mezLibrary}
-        mb={16}
-      />
-    </>
-  );
 
   const SetAbrProfile = ({profile, stringify=true}) => {
     const abr = stringify ? JSON.stringify(profile, null, 2) || "" : profile;
@@ -479,7 +456,7 @@ const Create = observer(() => {
                   mb={16}
                 >
                   <Flex p="65 70" direction="column" justify="center" gap={0}>
-                    <Flex justify="center" mb={4}>
+                    <Flex justify="center" mb={7}>
                       <Dropzone.Accept>
                         <UploadIcon />
                       </Dropzone.Accept>
@@ -495,25 +472,24 @@ const Create = observer(() => {
                     </Flex>
 
                     <Stack justify="center" gap={0} align="center">
-                      <Text c="elv-gray.9" fz={12} fw={400} mb={0}>Drag and drop a video or audio file</Text>
+                      <Title c="elv-gray.9" order={4} mb={7}>Drag and Drop a Video or Audio File</Title>
                       <UnstyledButton variant="transparent" p={0} size="xs" h={15}>
-                        <Text fz={12} c="elv-blue.6">Upload a File</Text>
+                        <Text fz={14} c="elv-blue.2" fw={500}>Upload a File</Text>
                       </UnstyledButton>
                     </Stack>
                   </Flex>
                 </Dropzone>
                 {
                   files.length > 0 &&
-                  <Text mb={8}>Files:</Text>
+                  <Text mb={8} c="elv-gray.9">Files:</Text>
                 }
-                <Flex direction="column" gap={0}>
+                <Flex direction="column" gap={0} mb={29}>
                   {
                     files.map((file, index) => (
                       <Box
                         key={`${file.name || file.path}-${index}`}
                         bg="elv-gray.0"
                         p={16}
-                        mb=".875rem"
                         bd={file.errors ? "2px solid elv-red.4" : "1px solid transparent"}
                       >
                         <Stack>
@@ -527,8 +503,8 @@ const Create = observer(() => {
                                 file.errors &&
                                 <ExclamationCircleIcon color="var(--mantine-color-elv-red-4)" />
                               }
-                              <Text>{file.name || file.path}</Text>
-                              <Text>- {PrettyBytes(file.size || 0)}</Text>
+                              <Text c="elv-gray.9">{file.name || file.path}</Text>
+                              <Text c="elv-gray.9">- {PrettyBytes(file.size || 0)}</Text>
                             </Group>
                             <ActionIcon
                               title="Remove file"
@@ -567,6 +543,8 @@ const Create = observer(() => {
                 <Textarea
                   label="Presigned URL"
                   name="presignedUrl"
+                  placeholder="https://example-bucket.region.amazonaws.com/path-to-media"
+                  description="Enter a presigned URL to securely access your S3 object."
                   value={s3PresignedUrl}
                   onChange={event => setS3PresignedUrl(event.target.value)}
                   required={uploadMethod === "S3" && !s3UseAKSecret}
@@ -574,26 +552,28 @@ const Create = observer(() => {
                 />
               }
 
-              <Select
-                label="Region"
-                name="s3Region"
-                data={
-                  s3Regions.map(({value, name}) => (
-                    {value, label: name}
-                  ))
-                }
-                placeholder="Select Region"
-                onChange={value => setS3Region(value)}
-                required={s3UseAKSecret}
-                mb={16}
-              />
+              <SimpleGrid cols={2} spacing={150} mb={18}>
+                <Select
+                  label="Region"
+                  name="s3Region"
+                  data={
+                    s3Regions.map(({value, name}) => (
+                      {value, label: name}
+                    ))
+                  }
+                  placeholder="Select Region"
+                  description="Select the AWS region where your S3 bucket is hosted."
+                  onChange={value => setS3Region(value)}
+                  required={s3UseAKSecret}
+                />
+              </SimpleGrid>
 
               <Checkbox
                 label="Use access key and secret"
                 name="s3UseAKSecret"
                 checked={s3UseAKSecret}
                 onChange={event => setS3UseAKSecret(event.target.checked)}
-                mb={16}
+                mb={18}
               />
 
               {
@@ -603,29 +583,34 @@ const Create = observer(() => {
                       label="S3 URI"
                       name="s3Url"
                       value={s3Url}
+                      placeholder="s3://example-bucket/path-to-media"
+                      description="Enter a presigned URL to securely fetch your S3 object for this request."
                       onChange={event => setS3Url(event.target.value)}
-                      placeholder="s3://BUCKET_NAME/PATH_TO_MEDIA.mp4"
                       required={uploadMethod === "S3"}
-                      mb={16}
+                      mb={18}
                     />
                     <TextInput
                       label="Access key"
                       name="s3AccessKey"
+                      placeholder="Enter your AWS access key"
+                      description="Provide your AWS access key for authentication."
                       value={s3AccessKey}
                       onChange={event => setS3AccessKey(event.target.value)}
                       type="password"
                       required={uploadMethod === "S3"}
-                      mb={16}
+                      mb={18}
                     />
 
                     <TextInput
                       label="Secret"
                       name="s3Secret"
                       value={s3Secret}
+                      placeholder="Enter your AWS secret key"
+                      description="Enter the AWS secret key to sign this request securely."
                       onChange={event => setS3Secret(event.target.value)}
                       type="password"
                       required={uploadMethod === "S3"}
-                      mb={16}
+                      mb={18}
                     />
                   </>
               }
@@ -635,22 +620,21 @@ const Create = observer(() => {
                 name="s3Copy"
                 checked={s3Copy}
                 onChange={event => setS3Copy(event.target.checked)}
-                mb={16}
+                mb={29}
               />
             </>
           }
 
-          <Divider mb={12} />
-          <SectionTitle>General</SectionTitle>
+          <Divider mb={29} />
+          <SectionTitle mb={10}>General</SectionTitle>
 
-          <SimpleGrid cols={2} spacing={150}>
+          <SimpleGrid cols={2} spacing={150} mb={18}>
             <TextInput
               label="Name"
               name="name"
               placeholder="Enter content name"
               onChange={event => setName(event.target.value)}
               value={name}
-              mb={16}
               required
             />
             <TextInput
@@ -659,7 +643,6 @@ const Create = observer(() => {
               placeholder="Enter a title"
               onChange={event => setDisplayTitle(event.target.value)}
               value={displayTitle}
-              mb={16}
             />
           </SimpleGrid>
 
@@ -670,10 +653,10 @@ const Create = observer(() => {
             description="Enter a description to provide more details and context."
             onChange={event => setDescription(event.target.value)}
             value={description}
-            mb={16}
+            mb={18}
           />
 
-          <SimpleGrid cols={2} spacing={150}>
+          <SimpleGrid cols={2} spacing={150} mb={18}>
             <Select
               label="Library"
               description={useMasterAsMez ? "Select the library where your master and mezzanine object will be stored." : "Select the library where your master object will be stored."}
@@ -689,9 +672,27 @@ const Create = observer(() => {
               }
               placeholder="Select Library"
               onChange={value => setMasterLibrary(value)}
-              mb={16}
             />
-            { !useMasterAsMez && mezDetails }
+            {
+              !useMasterAsMez &&
+              <Select
+                label="Mezzanine Library"
+                description="This is the library where your mezzanine object will be created."
+                name="mezLibrary"
+                required={true}
+                data={
+                  Object.keys(ingestStore.libraries || {}).map(libraryId => (
+                    {
+                      label: ingestStore.libraries[libraryId].name || "",
+                      value: libraryId
+                    }
+                  ))
+                }
+                placeholder="Select Library"
+                onChange={value => setMezLibrary(value)}
+                value={mezLibrary}
+              />
+            }
           </SimpleGrid>
           <Checkbox
             label="Use Master Object as Mezzanine Object"
@@ -701,10 +702,10 @@ const Create = observer(() => {
               setUseMasterAsMez(event.target.checked);
             }}
             name="masterAsMez"
-            mb={16}
+            mb={18}
           />
 
-          <SimpleGrid cols={2} spacing={150}>
+          <SimpleGrid cols={2} spacing={150} mb={29}>
             <Select
               label="Mezzanine Content Type"
               description="Select a content type for the mezzanine object."
@@ -716,14 +717,13 @@ const Create = observer(() => {
               placeholder="Select Content Type"
               value={mezContentType}
               onChange={value => setMezContentType(value)}
-              mb={16}
             />
           </SimpleGrid>
 
-          <Divider mb={12} />
-          <SectionTitle>Access</SectionTitle>
+          <Divider mb={29} />
+          <SectionTitle mb={10}>Access</SectionTitle>
 
-          <SimpleGrid cols={2} spacing={150}>
+          <SimpleGrid cols={2} spacing={150} mb={29}>
             <Select
               label="Access Group"
               description="The Access Group that will manage your master object."
@@ -737,17 +737,14 @@ const Create = observer(() => {
               value={accessGroup}
               onChange={(value) => setAccessGroup(value)}
               allowDeselect={false}
-              mb={16}
             />
             <Permissions permission={permission} setPermission={setPermission} />
           </SimpleGrid>
 
-          <Divider mb={12} />
-          <SectionTitle
-            title="Playback & Streaming"
-          />
+          <Divider mb={29} />
+          <SectionTitle mb={10}>Playback & Streaming</SectionTitle>
 
-          <SimpleGrid cols={2} spacing={150}>
+          <SimpleGrid cols={2} spacing={150} mb={10}>
             <Select
               description="Select a playback encryption option. Enable Clear or Digital Rights Management (DRM) copy protection during playback."
               name="encryption"
@@ -797,14 +794,13 @@ const Create = observer(() => {
               minRows={6}
               maxRows={10}
               autosize
-              mb={16}
             />
           }
 
           <Button
             type="submit"
             disabled={isCreating || !ValidForm()}
-            mt={16}
+            mt={25}
           >
             { isCreating ? "Submitting..." : "Create" }
           </Button>

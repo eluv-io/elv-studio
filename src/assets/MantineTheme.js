@@ -153,6 +153,11 @@ const theme = createTheme({
         input: {
           "--checkbox-color": "var(--mantine-color-elv-blue-2)",
           "borderRadius": "2.2px"
+        },
+        label: {
+          "fontSize": rem(14),
+          "fontWeight": 500,
+          "color": "var(--mantine-color-elv-gray-9)"
         }
       })
     },
@@ -171,7 +176,7 @@ const theme = createTheme({
         root: {
           border: "none",
           borderRadius: "5px",
-          backgroundImage: "url(\"data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='4.5' stroke='%2334065F' stroke-width='2' stroke-dasharray='9%2c 9' stroke-dashoffset='0' stroke-linecap='round'/%3e%3c/svg%3e\")"
+          backgroundImage: "url(\"data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='4.5' stroke='%23868e96' stroke-width='2' stroke-dasharray='9%2c 9' stroke-dashoffset='0' stroke-linecap='round'/%3e%3c/svg%3e\")"
         }
       })
     },
