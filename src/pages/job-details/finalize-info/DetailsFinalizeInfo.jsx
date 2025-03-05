@@ -2,7 +2,7 @@ import {observer} from "mobx-react-lite";
 import {ingestStore} from "@/stores/index.js";
 import {Divider} from "@mantine/core";
 import DetailRow from "@/pages/job-details/common/DetailsCommon.jsx";
-import FormSectionTitle from "@/components/form-section-title/FormSectionTitle.jsx";
+import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 import {rootStore} from "@/stores/index.js";
 
 const DetailsFinalizeInfo = observer(({jobId}) => {
@@ -44,7 +44,7 @@ const DetailsFinalizeInfo = observer(({jobId}) => {
   return (
     <>
       <Divider mb={12} />
-      <FormSectionTitle title="Mezzanine Object Details" />
+      <SectionTitle>Mezzanine Object Details</SectionTitle>
       {
         VALUES.map(({label, value, copyable, onClick, href, clickTitle}) => (
           <DetailRow

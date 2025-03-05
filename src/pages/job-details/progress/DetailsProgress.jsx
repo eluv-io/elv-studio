@@ -1,6 +1,6 @@
 import {observer} from "mobx-react-lite";
 import {Divider, Loader, Text} from "@mantine/core";
-import FormSectionTitle from "@/components/form-section-title/FormSectionTitle.jsx";
+import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 import TextCard from "@/components/text-card/TextCard.jsx";
 import {ingestStore} from "@/stores/index.js";
 import {CheckmarkIcon} from "@/assets/icons/index.jsx";
@@ -39,7 +39,7 @@ const DetailsProgress = observer(({jobId}) => {
   return (
     <>
       <Divider mb={12} />
-      <FormSectionTitle title="Progress" />
+      <SectionTitle>Progress</SectionTitle>
 
       <TextCard
         title="Upload"

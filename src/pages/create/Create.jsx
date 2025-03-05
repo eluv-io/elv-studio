@@ -30,7 +30,7 @@ import {
   SimpleGrid,
   Tooltip
 } from "@mantine/core";
-import FormSectionTitle from "@/components/form-section-title/FormSectionTitle.jsx";
+import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 import {Dropzone} from "@mantine/dropzone";
 
 const HandleRemove = ({index, files, SetFilesCallback}) => {
@@ -430,14 +430,14 @@ const Create = observer(() => {
     <PageContainer title="Create" error={error}>
       <FabricLoader>
         <form onSubmit={HandleSubmit} className={styles.form}>
-          <FormSectionTitle title="Upload New Media" />
+          <SectionTitle mb={2}>Upload New Media</SectionTitle>
           <Radio.Group
             name="uploadMethod"
             value={uploadMethod}
             onChange={value => setUploadMethod(value)}
-            mb={16}
+            mb={29}
           >
-            <Stack mt="xs">
+            <Stack mt={20} gap={18}>
               <Radio
                 value="LOCAL"
                 label="Local File"
@@ -641,9 +641,7 @@ const Create = observer(() => {
           }
 
           <Divider mb={12} />
-          <FormSectionTitle
-            title="General"
-          />
+          <SectionTitle>General</SectionTitle>
 
           <SimpleGrid cols={2} spacing={150}>
             <TextInput
@@ -723,9 +721,7 @@ const Create = observer(() => {
           </SimpleGrid>
 
           <Divider mb={12} />
-          <FormSectionTitle
-            title="Access"
-          />
+          <SectionTitle>Access</SectionTitle>
 
           <SimpleGrid cols={2} spacing={150}>
             <Select
@@ -747,7 +743,7 @@ const Create = observer(() => {
           </SimpleGrid>
 
           <Divider mb={12} />
-          <FormSectionTitle
+          <SectionTitle
             title="Playback & Streaming"
           />
 

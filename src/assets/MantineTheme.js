@@ -11,7 +11,7 @@ const theme = createTheme({
       },
       h2: {
         fontSize: rem(18),
-        fontWeight: 600,
+        fontWeight: 600
       },
       h3: {
         fontSize: rem(14),
@@ -33,11 +33,11 @@ const theme = createTheme({
     "elv-blue": [
       "#ebf3fc", // eluvio color
       "#f8f9fd", // eluvio color
-      "#a6bff6",
       "#228be6", // eluvio color
+      "#4489df", // eluvio color
       "#3f85e3", // eluvio color
       "#336be4", // eluvio color
-      "#2b6cfb", // eluvio color
+      "#1a71cf", // eluvio color
       "#1351cb",
       "#0648b6",
       "#003ea2"
@@ -57,25 +57,26 @@ const theme = createTheme({
     ],
     "elv-gray": [
       "#f5f5f5",
-      "#f0f0f0",
+      "#e3e3e3", // eluvio color
       "#d7d7d7", // eluvio color
       "#bdbdbd", // eluvio color
       "rgba(0,0,0,0.06)", // eluvio color
       "#8b8b8b",
-      "#848484",
-      "#717171",
+      "#868e96", // eluvio color
+      "#6b6b6b", // eluvio color
       "#4b494e", // eluvio color
       "#3c3c3c" // eluvio color
     ],
     "elv-black": [
       "#22252a", // eluvio color
       "#202020", // eluvio color
-      "#1e1e1e" // eluvio color
+      "#1e1e1e", // eluvio color
+      "#212529" // eluvio color
     ],
     "elv-neutral": [
       "#eeeeee", // eluvio color
       "#ecece8", // eluvio color
-      "#cdc8d3",
+      "#c2c6d7", // eluvio color
       "#b2aaba", // eluvio color
       "#a9a0b2", // eluvio color
       "#7b7580", // eluvio color
@@ -115,7 +116,7 @@ const theme = createTheme({
         root: {
           "textDecoration": "underline",
           "fontWeight": "700",
-          "fontSize": "0.75rem"
+          "fontSize": rem(12)
         }
       })
     },
@@ -127,25 +128,22 @@ const theme = createTheme({
       })
     },
     Button: {
+      defaultProps: {
+        variant: "filled"
+      },
       styles: (theme, params) => ({
         root: {
-          "borderRadius": "0",
           "minWidth": "7rem",
-          "minHeight": "35px",
+          "--button-radius": rem(5),
+          "--mantine-color-elv-blue-outline": "var(--mantine-color-elv-blue-3)",
+          "--mantine-color-elv-blue-filled": "var(--mantine-color-elv-blue-3)",
+          // Change outline default design
           ...(params.variant === "outline" && {
-            "borderColor": "var(--mantine-color-elv-gray-3)",
             ...(params.disabled && {
+              "border": "1px solid var(--mantine-color-elv-gray-6)",
+              "opacity": "50%",
               "backgroundColor": "transparent"
             })
-          })
-        },
-        label: {
-          "fontWeight": "400",
-          ...(params.size === "sm" && {
-            "fontSize": "calc(0.85rem * var(--mantine-scale)"
-          }),
-          ...(params.variant === "outline" && !params.disabled && {
-            "color": "var(--mantine-color-elv-black-0)"
           })
         }
       })
@@ -153,8 +151,18 @@ const theme = createTheme({
     Checkbox: {
       styles: () => ({
         input: {
-          "--checkbox-color": "var(--mantine-color-elv-blue-3)",
-          "borderRadius": "0"
+          "--checkbox-color": "var(--mantine-color-elv-blue-2)",
+          "borderRadius": "2.2px"
+        }
+      })
+    },
+    InputWrapper: {
+      styles: () => ({
+        label: {
+          "fontWeight": 700,
+          "fontSize": rem(14),
+          "color": "var(--mantine-color-elv-gray-9)",
+          "marginBottom": "2px"
         }
       })
     },
@@ -167,24 +175,10 @@ const theme = createTheme({
         }
       })
     },
-    Group: {
-      styles: () => ({
-        root: {
-          "--mantine-spacing-xxs": "0.3125rem"
-        }
-      })
-    },
-    Indicator: {
-      styles: () => ({
-        root: {
-          "lgg": "16px"
-        }
-      })
-    },
     Modal: {
       styles: () => ({
         title: {
-          "fontSize": "1.25rem"
+          "fontSize": rem(20)
         }
       })
     },
@@ -210,13 +204,23 @@ const theme = createTheme({
         },
         radio: {
           "--radio-color": "var(--mantine-color-elv-blue-3)"
+        },
+        label: {
+          "fontWeight": 700,
+          "fontSize": rem(14),
+          "color": "var(--mantine-color-elv-gray-9)"
+        },
+        description: {
+          "fontWeight": 500,
+          "fontSize": rem(12),
+          "color": "var(--mantine-color-elv-gray-6)"
         }
       })
     },
     Select: {
       styles: () => ({
         input: {
-          "borderRadius": "0"
+          "borderRadius": rem(6)
         }
       })
     },
@@ -231,10 +235,18 @@ const theme = createTheme({
         }
       }
     },
+    Textarea: {
+      styles: () => ({
+        input: {
+          "--input-color": "var(--mantine-color-elv-gray-9)"
+        }
+      })
+    },
     TextInput: {
       styles: () => ({
         input: {
-          "borderRadius": "0"
+          "--input-color": "var(--mantine-color-elv-gray-9)",
+          "borderRadius": rem(6)
         }
       })
     }
