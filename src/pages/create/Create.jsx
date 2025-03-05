@@ -150,7 +150,10 @@ const Create = observer(() => {
   const [s3Copy, setS3Copy] = useState(false);
   const [s3PresignedUrl, setS3PresignedUrl] = useState("");
   const [s3UseAKSecret, setS3UseAKSecret] = useState(false);
+
+  // Custom errors
   const [s3UrlFieldError, setS3UrlFieldError] = useState(null);
+  const [nameFieldError, setNameFieldError] = useState(null);
 
   const ENCRYPTION_OPTIONS = [
     {value: "drm-public", label: "DRM - Public Access", disabled: disableDrmPublic, title: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128"},
@@ -299,7 +302,9 @@ const Create = observer(() => {
       playbackEncryption === "custom" && !abrProfile ||
       // Check for invalid files
       (files.length > 0 && files.some(item => item.errors)) ||
-      !mezContentType
+      !mezContentType ||
+      //  Check for input errors
+      nameFieldError
     ) {
       return false;
     }
@@ -310,7 +315,9 @@ const Create = observer(() => {
           !s3Region ||
           !s3Url ||
           !s3AccessKey ||
-          !s3Secret
+          !s3Secret ||
+          // Input error
+          s3UrlFieldError
         ) {
           return false;
         }
@@ -326,6 +333,16 @@ const Create = observer(() => {
 
   const ValidS3Url = ({value}) => {
     return !value || value.startsWith("s3://");
+  };
+
+  const ValidName = ({value}) => {
+    const trimmedValue = value.trim();
+
+    if(value && trimmedValue.length < 3) {
+      return false;
+    } else {
+      return true;
+    }
   };
 
   const HandleSubmit = async (event) => {
@@ -653,6 +670,16 @@ const Create = observer(() => {
               name="name"
               placeholder="Enter content name"
               onChange={event => setName(event.target.value)}
+              onBlur={() => {
+                if(ValidName({value: name})) {
+                  if(nameFieldError) {
+                    setNameFieldError(null);
+                  }
+                } else {
+                  setNameFieldError("Name must be at least 3 characters long.");
+                }
+              }}
+              error={nameFieldError}
               value={name}
               required
             />
