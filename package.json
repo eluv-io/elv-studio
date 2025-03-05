@@ -24,8 +24,6 @@
     "@mantine/core": "^7.15.1",
     "@mantine/dropzone": "^7.15.1",
     "@mantine/hooks": "^7.17.0",
-    "@radix-ui/react-dialog": "^1.0.0",
-    "@radix-ui/react-tooltip": "^1.0.0",
     "@tabler/icons-react": "^3.28.1",
     "mantine-datatable": "^7.15.1",
     "mobx": "^6.13.3",

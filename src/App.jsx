@@ -3,9 +3,9 @@ import {observer} from "mobx-react-lite";
 import AppRoutes from "./Routes.jsx";
 
 import SideNavigation from "@/components/side-navigation/SideNavigation.jsx";
-import WarningDialog from "@/components/WarningDialog.jsx";
+import ConfirmModal from "@/components/confirm-modal/ConfirmModal.jsx";
 import JobsWrapper from "@/pages/jobs/wrapper/JobsWrapper.jsx";
-import {rootStore, uiStore} from "@/stores/index.js";
+import {ingestStore, rootStore, uiStore} from "@/stores/index.js";
 import MantineTheme from "@/assets/MantineTheme.js";
 
 import {AppShell, Loader, MantineProvider} from "@mantine/core";
@@ -32,7 +32,15 @@ const App = observer(() => {
                   </JobsWrapper>
                 ) : <Loader />
             }
-            <WarningDialog />
+            <ConfirmModal
+              show={ingestStore.showDialog}
+              title={ingestStore.dialog.title}
+              message={ingestStore.dialog.description}
+              confirmText="Yes"
+              cancelText="No"
+              CloseCallback={() => ingestStore.HideWarningDialog("NO")}
+              ConfirmCallback={() => ingestStore.HideWarningDialog("YES")}
+            />
           </AppShell.Main>
         </AppShell>
       </BrowserRouter>
