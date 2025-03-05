@@ -150,6 +150,7 @@ const Create = observer(() => {
   const [s3Copy, setS3Copy] = useState(false);
   const [s3PresignedUrl, setS3PresignedUrl] = useState("");
   const [s3UseAKSecret, setS3UseAKSecret] = useState(false);
+  const [s3UrlFieldError, setS3UrlFieldError] = useState(null);
 
   const ENCRYPTION_OPTIONS = [
     {value: "drm-public", label: "DRM - Public Access", disabled: disableDrmPublic, title: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128"},
@@ -321,6 +322,10 @@ const Create = observer(() => {
     }
 
     return true;
+  };
+
+  const ValidS3Url = ({value}) => {
+    return !value || value.startsWith("s3://");
   };
 
   const HandleSubmit = async (event) => {
@@ -584,9 +589,22 @@ const Create = observer(() => {
                       label="S3 URI"
                       name="s3Url"
                       value={s3Url}
-                      placeholder="s3://example-bucket/path-to-media"
+                      placeholder="s3://example-bucket/path-to-file.mp4"
                       description="Enter a presigned URL to securely fetch your S3 object for this request."
-                      onChange={event => setS3Url(event.target.value)}
+                      onChange={event => {
+                        setS3Url(event.target.value);
+                      }}
+                      error={s3UrlFieldError}
+                      onBlur={() => {
+                        if(ValidS3Url({value: s3Url})) {
+
+                          if(s3UrlFieldError) {
+                            setS3UrlFieldError(null);
+                          }
+                        } else {
+                          setS3UrlFieldError("Invalid S3 URI. It should begin with 's3://'. Example: 's3://example-bucket/path-to-file.mp4.'");
+                        }
+                      }}
                       required={uploadMethod === "S3"}
                       mb={18}
                     />
