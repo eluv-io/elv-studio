@@ -659,7 +659,7 @@ const Create = observer(() => {
 
           <SimpleGrid cols={2} spacing={150} mb={18}>
             <Select
-              label="Library"
+              label={useMasterAsMez ? "Library" : "Master Library"}
               description={useMasterAsMez ? "Select the library where your master and mezzanine object will be stored." : "Select the library where your master object will be stored."}
               name="masterLibrary"
               required={true}
