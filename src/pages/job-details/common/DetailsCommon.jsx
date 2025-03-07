@@ -45,10 +45,6 @@ export const DetailRow = ({
 }) => {
   const clipboard = useClipboard();
 
-  if(copyable && !value) {
-    throw Error("Value must be specified when copyable is set");
-  }
-
   const HandleClick = copyable ?
     () => clipboard.copy(value) :
     () => onClick();
@@ -85,7 +81,7 @@ export const DetailRow = ({
           { value || "" }
         </Text>
         {
-          (copyable || onClick || href) &&
+          (copyable && value || onClick || href) &&
           <Action
             label={actionLabel}
             onClick={HandleClick}

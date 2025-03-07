@@ -799,6 +799,7 @@ const Create = observer(() => {
               mb={16}
               value={playbackEncryption}
               onChange={value => setPlaybackEncryption(value)}
+              required
               label={
                 <Flex align="center" gap={6}>
                   Playback Encryption
