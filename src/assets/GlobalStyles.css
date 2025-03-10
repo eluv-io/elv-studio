@@ -9,3 +9,9 @@
 .mantine-Radio-radio {
   outline-color: var(--mantine-color-elv-neutral-2);
 }
+
+.mantine-InputWrapper-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}

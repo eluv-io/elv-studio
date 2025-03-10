@@ -28,7 +28,9 @@ import {
   Divider,
   UnstyledButton,
   SimpleGrid,
-  Tooltip, Title
+  Tooltip,
+  Title,
+  JsonInput
 } from "@mantine/core";
 import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 import {Dropzone} from "@mantine/dropzone";
@@ -294,6 +296,13 @@ const Create = observer(() => {
   };
 
   const ValidForm = () => {
+    // Check for JSON validation errors first
+    try {
+      JSON.parse(abrProfile);
+    } catch(_error) {
+      return false;
+    }
+
     if(
       uploadMethod === "LOCAL" && files.length === 0 ||
       !masterLibrary ||
@@ -831,16 +840,18 @@ const Create = observer(() => {
 
           {
             playbackEncryption === "custom" &&
-            <Textarea
+            <JsonInput
               name="abrProfile"
               label="ABR Profile Metadata"
               value={abrProfile}
-              onChange={event => setAbrProfile(event.target.value)}
+              onChange={value => setAbrProfile(value)}
               required={playbackEncryption === "custom"}
               defaultValue={{default_profile: {}}}
+              validationError="Invalid JSON"
+              autosize
               minRows={6}
               maxRows={10}
-              autosize
+              formatOnBlur
             />
           }
 
