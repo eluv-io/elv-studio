@@ -4,7 +4,7 @@ import {ingestStore} from "@/stores";
 import PageContainer from "@/components/page-container/PageContainer.jsx";
 import {DataTable} from "mantine-datatable";
 import {useNavigate} from "react-router-dom";
-import {Button, Text} from "@mantine/core";
+import {Box, Button, Title} from "@mantine/core";
 
 import styles from "./Jobs.module.css";
 import ConfirmModal from "@/components/confirm-modal/ConfirmModal.jsx";
@@ -58,9 +58,10 @@ const Jobs = observer(() => {
   return (
     <PageContainer title="Ingest Jobs">
       <Button
+        variant="outline"
         onClick={() => setShowClearJobsDialog(true)}
         mb={16}
-        disabled={!ingestStore.jobs || Object.keys(ingestStore.jobs).length === 0}
+        disabled={!records || records.length === 0}
       >
         Clear Inactive Jobs
       </Button>
@@ -74,40 +75,42 @@ const Jobs = observer(() => {
           CloseCallback={() => setShowClearJobsDialog(false)}
         />
       }
-      <DataTable
-        withTableBorder
-        highlightOnHover
-        idAccessor="_objectId"
-        minHeight={!records || records.length === 0 ? 150 : 75}
-        records={records}
-        onRowClick={({record}) => {
-          navigate(record._objectId);
-        }}
-        sortStatus={sortStatus}
-        onSortStatusChange={setSortStatus}
-        rowClassName={() => styles.row}
-        columns={[
-          { accessor: "_title", title: "Name", sortable: true, render: record => <Text fw={600} lineClamp={1} fz="sm">{ record._title }</Text> },
-          { accessor: "_objectId", title: "Object ID", sortable: true, render: record => <Text>{ record._objectId }</Text> },
-          {
-            accessor: "_status",
-            title: "Status",
-            render: record => (
-              <Text>
-                {
-                  JobStatus({
-                    uploadPercentage: record.upload?.percentage,
-                    currentStep: record.currentStep,
-                    estimatedTimeLeft: record.ingest?.estimatedTimeLeft,
-                    runState: record.finalize?.runState,
-                    error: record.error
-                  })
-                }
-              </Text>
-            )
-          }
-        ]}
-      />
+      <Box className={styles.tableWrapper}>
+        <DataTable
+          highlightOnHover
+          idAccessor="_objectId"
+          minHeight={!records || records.length === 0 ? 150 : 75}
+          records={records}
+          noRecordsText="No Records"
+          onRowClick={({record}) => {
+            navigate(record._objectId);
+          }}
+          sortStatus={sortStatus}
+          onSortStatusChange={setSortStatus}
+          rowClassName={() => styles.row}
+          columns={[
+            { accessor: "_title", title: "Name", sortable: true, render: record => <Title order={4} c="elv-gray.9">{ record._title }</Title> },
+            { accessor: "_objectId", title: "Object ID", sortable: true, render: record => <Title order={4} c="elv-gray.9">{ record._objectId }</Title> },
+            {
+              accessor: "_status",
+              title: "Status",
+              render: record => (
+                <Title order={4} c="elv-gray.9">
+                  {
+                    JobStatus({
+                      uploadPercentage: record.upload?.percentage,
+                      currentStep: record.currentStep,
+                      estimatedTimeLeft: record.ingest?.estimatedTimeLeft,
+                      runState: record.finalize?.runState,
+                      error: record.error
+                    })
+                  }
+                </Title>
+              )
+            }
+          ]}
+        />
+      </Box>
     </PageContainer>
   );
 });

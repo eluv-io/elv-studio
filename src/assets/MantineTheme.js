@@ -141,6 +141,7 @@ const theme = createTheme({
           ...(params.variant === "outline" && {
             ...(params.disabled && {
               "border": "1px solid var(--mantine-color-elv-gray-6)",
+              "color": "var(--mantine-color-elv-gray-6)",
               "opacity": "50%",
               "backgroundColor": "transparent"
             })

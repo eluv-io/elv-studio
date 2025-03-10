@@ -15,3 +15,13 @@
   flex-direction: row;
   align-items: center;
 }
+
+.mantine-datatable-header {
+  color: var(--mantine-color-elv-gray-9);
+}
+
+.mantine-datatable-empty-state .mantine-Text-root {
+  color: var(--mantine-color-elv-gray-9);
+  font-weight: 500;
+  font-size: 0.875rem;
+}

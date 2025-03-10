@@ -73,7 +73,7 @@ const PageContainer = ({
         {
           title &&
           <Flex justify={centerTitle ? "center" : "flex-start"}>
-            <Title order={3} size={24} c="elv-gray.9" mb={12}>
+            <Title order={1} c="elv-gray.9" mb={12}>
               { title }
             </Title>
           </Flex>
