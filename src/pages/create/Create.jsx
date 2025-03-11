@@ -221,11 +221,13 @@ const Create = observer(() => {
 
       SetPlaybackSettings({
         libraryId: mezLibrary || masterLibrary,
-        type: mezLibrary ? "MEZ" : "MASTER"
+        type: mezLibrary ? "MEZ" : "MASTER",
+        resetEncryption: false
       });
     }
-  }, [permission]);
 
+    setPlaybackEncryption(null);
+  }, [permission]);
 
   useEffect(() => {
     if(playbackEncryption === "custom" && !abrProfile) {
@@ -259,7 +261,8 @@ const Create = observer(() => {
 
   const SetPlaybackSettings = ({
     libraryId,
-    type
+    type,
+    resetEncryption=true
   }) => {
     const library = ingestStore.GetLibrary(libraryId);
     const libraryHasCert = !!library.drmCert;
@@ -291,14 +294,18 @@ const Create = observer(() => {
         setDisableDrmRestricted(!libraryHasCert || !library.abrProfileSupport.drmRestricted || permission === "owner");
       }
 
-      setPlaybackEncryption("");
+      if(resetEncryption) {
+        setPlaybackEncryption(null);
+      }
     }
   };
 
   const ValidForm = () => {
     // Check for JSON validation errors first
     try {
-      JSON.parse(abrProfile);
+      if(playbackEncryption === "custom" && abrProfile) {
+        JSON.parse(abrProfile);
+      }
     } catch(_error) {
       return false;
     }
