@@ -158,11 +158,11 @@ const Create = observer(() => {
   const [nameFieldError, setNameFieldError] = useState(null);
 
   const ENCRYPTION_OPTIONS = [
-    {value: "drm-public", label: "DRM - Public Access", disabled: disableDrmPublic, title: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128"},
-    {value: "drm-all", label: "DRM - All Formats", disabled: disableDrmAll, title: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128, HLS Fairplay, HLS Widevine, HLS PlayReady"},
-    {value: "drm-restricted", label: "DRM - Widevine and Fairplay", disabled: disableDrmRestricted, title: "Playout Formats: Dash Widevine, HLS Fairplay"},
-    {value: "clear", label: "Clear", disabled: disableClear, title: "Playout Formats - HLS Clear, Dash Clear"},
-    {value: "custom", label: "Custom", title: "Define a custom ABR profile"}
+    {id: "drm-public", value: "drm-public", label: "DRM - Public Access", disabled: disableDrmPublic, title: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128"},
+    {id: "drm-all", value: "drm-all", label: "DRM - All Formats", disabled: disableDrmAll, title: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128, HLS Fairplay, HLS Widevine, HLS PlayReady"},
+    {id: "drm-restricted", value: "drm-restricted", label: "DRM - Widevine and Fairplay", disabled: disableDrmRestricted, title: "Playout Formats: Dash Widevine, HLS Fairplay"},
+    {id: "clear", value: "clear", label: "Clear", disabled: disableClear, title: "Playout Formats - HLS Clear, Dash Clear"},
+    {id: "custom", value: "custom", label: "Custom", title: "Define a custom ABR profile"}
   ];
 
   useEffect(() => {

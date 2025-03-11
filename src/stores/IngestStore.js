@@ -991,7 +991,7 @@ class IngestStore {
             });
           }
 
-          this.FinalizeABRMezzanine({
+          await this.FinalizeABRMezzanine({
             libraryId,
             objectId,
             masterObjectId
@@ -1089,6 +1089,12 @@ class IngestStore {
 
       const formData = this.jobs[masterObjectId].formData;
       delete formData.master.abr;
+
+      yield this.WaitForPublish({
+        hash: finalizeAbrResponse.hash,
+        objectId,
+        libraryId
+      });
 
       this.UpdateIngestObject({
         id: masterObjectId,

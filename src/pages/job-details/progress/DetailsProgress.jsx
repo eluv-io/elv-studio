@@ -81,7 +81,11 @@ const DetailsProgress = observer(({jobId}) => {
               Failed
             </Text> :
             ingestStore.jobs[jobId].currentStep === "finalize" &&
-            <CheckmarkIcon className={styles.itemIcon} />
+            (
+              ingestStore.jobs[jobId].finalize.objectId ?
+                <CheckmarkIcon className={styles.itemIcon} /> :
+                <Loader size={20} />
+            )
         }
       />
     </>

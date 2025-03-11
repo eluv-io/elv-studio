@@ -77,7 +77,7 @@ export const DetailRow = ({
         >
           { `${label}:` }
         </Text>
-        <Text truncate="end" fz={14} fw={400} maw={copyable ? "60%" : "100%"}>
+        <Text truncate="end" fz={14} fw={400} maw={"100%"}>
           { value || "" }
         </Text>
         {
