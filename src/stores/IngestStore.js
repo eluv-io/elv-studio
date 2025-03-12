@@ -724,8 +724,7 @@ class IngestStore {
         libraryId,
         objectId: masterObjectId,
         writeToken,
-        commitMessage: "Create master object",
-        awaitCommitConfirmation: false
+        commitMessage: "Create master object"
       });
     } catch(error) {
       return this.HandleError({
