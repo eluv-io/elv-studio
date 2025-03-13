@@ -1,7 +1,8 @@
-import {ActionIcon, Box, Code} from "@mantine/core";
+import {ActionIcon, Box, Code, Tooltip} from "@mantine/core";
 import {CopyToClipboard} from "@/utils/helpers.js";
-import {CheckmarkIcon, CopyIcon} from "@/assets/icons/index.jsx";
+import {CopyIcon} from "@/assets/icons/index.jsx";
 import {useState} from "react";
+import styles from "./JSONView.module.css";
 
 const JSONView = ({json, copyable=false}) => {
   const [copied, setCopied] = useState(false);
@@ -10,7 +11,7 @@ const JSONView = ({json, copyable=false}) => {
     <Box
       pos="relative"
     >
-      <Code block>
+      <Code block className={styles.code} bg="elv-blue.0">
         <Box
           mih="1.5rem"
           p="0.5rem 2.75rem 0.5rem 1rem"
@@ -18,9 +19,10 @@ const JSONView = ({json, copyable=false}) => {
         >
           { json }
         </Box>
-          {
-            copyable &&
-            (
+        {
+          copyable &&
+          (
+            <Tooltip label={copied ? "Copied": "Copy"} position="bottom">
               <ActionIcon
                 variant="transparent"
                 pos="absolute"
@@ -35,13 +37,11 @@ const JSONView = ({json, copyable=false}) => {
                   }, [3000]);
                 }}
               >
-                {
-                  copied ?
-                    <CheckmarkIcon width={14} /> : <CopyIcon />
-                }
+                <CopyIcon color="var(--mantine-color-elv-gray-6)" />
               </ActionIcon>
-            )
-          }
+            </Tooltip>
+          )
+        }
       </Code>
     </Box>
   );

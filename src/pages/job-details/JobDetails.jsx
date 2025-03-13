@@ -62,7 +62,12 @@ const ErrorDialog = observer(({jobId, showErrorDialog, setShowErrorDialog}) => {
       onClose={() => setShowErrorDialog(false)}
       title={`Error Log for ${ingestStore.jobs[jobId].formData?.master.title || jobId}`}
       hideCancelButton={true}
-      size="MD"
+      size="lg"
+      padding="24px"
+      radius="6px"
+      centered
+      closeOnClickOutside={false}
+      withCloseButton={false}
     >
       <JSONView json={ingestStore.jobs[jobId].errorLog} copyable={true} />
 
