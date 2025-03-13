@@ -1,5 +1,5 @@
 import {observer} from "mobx-react-lite";
-import {Box, Divider, Loader, SimpleGrid, Text} from "@mantine/core";
+import {Box, Loader, SimpleGrid, Text} from "@mantine/core";
 import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 import TextCard from "@/components/text-card/TextCard.jsx";
 import {ingestStore} from "@/stores/index.js";
@@ -9,7 +9,6 @@ import styles from "./DetailsProgress.module.css";
 const DetailsProgress = observer(({jobId}) => {
   return (
     <Box mb={19} className={styles.container}>
-      <Divider mb={19} />
       <SectionTitle mb={19}>Progress</SectionTitle>
 
       <SimpleGrid cols={2} spacing={150}>
@@ -20,7 +19,7 @@ const DetailsProgress = observer(({jobId}) => {
           }
           rightSection={
             ingestStore.jobs[jobId].upload.runState === "failed" ?
-              <Text c="elv-red.4">
+              <Text c="elv-red.5">
                 Failed
               </Text> :
               ingestStore.jobs[jobId].upload.runState === "finished" ?
@@ -38,7 +37,7 @@ const DetailsProgress = observer(({jobId}) => {
           }
           rightSection={
             ingestStore.jobs[jobId].ingest.runState === "failed" ?
-              <Text c="elv-red.4">
+              <Text c="elv-red.5">
                 Failed
               </Text> :
               ["ingest", "finalize"].includes(ingestStore.jobs[jobId].currentStep) &&
@@ -55,7 +54,7 @@ const DetailsProgress = observer(({jobId}) => {
           title="Finalize"
           rightSection={
             ingestStore.jobs[jobId].finalize.runState === "failed" ?
-              <Text c="elv-red.4">
+              <Text c="elv-red.5">
                 Failed
               </Text> :
               ingestStore.jobs[jobId].currentStep === "finalize" &&

@@ -1,7 +1,7 @@
 import {observer} from "mobx-react-lite";
 import {ingestStore} from "@/stores/index.js";
 import PrettyBytes from "pretty-bytes";
-import {Box} from "@mantine/core";
+import {Box, Divider} from "@mantine/core";
 import DetailRow from "@/pages/job-details/common/DetailsCommon.jsx";
 import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 
@@ -112,6 +112,7 @@ const DetailsInfo = observer(({jobId}) => {
             />
           ))
       }
+      <Divider mb={19} mt={19} />
     </Box>
   );
 });

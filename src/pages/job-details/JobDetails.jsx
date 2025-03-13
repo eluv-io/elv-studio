@@ -10,7 +10,9 @@ import {
   Box,
   Button,
   Flex,
-  Loader, Modal
+  Loader,
+  Modal,
+  Text
 } from "@mantine/core";
 import styles from "./JobDetails.module.css";
 import PageContainer from "@/components/page-container/PageContainer.jsx";
@@ -27,17 +29,21 @@ const ErrorNotification = observer(({jobId, setShowErrorDialog}) => {
     <Box>
       <Alert
         variant="light"
-        color="var(--mantine-color-elv-red-8)"
+        bg="var(--mantine-color-elv-red-0)"
         classNames={{wrapper: styles.alertWrapper}}
-        icon={<ExclamationCircleIcon />}
+        icon={<ExclamationCircleIcon height={20} width={20} color="var(--mantine-color-elv-red-5)" />}
       >
         <Flex justify="space-between" align="center">
-          { ingestStore.jobs[jobId].errorMessage || fallbackErrorMessage }
+          <Text c="elv-gray.9" fw={600} fz={14}>
+            { ingestStore.jobs[jobId].errorMessage || fallbackErrorMessage }
+          </Text>
           {
             ingestStore.jobs[jobId].errorLog &&
             (
               <Button variant="transparent" onClick={() => setShowErrorDialog(true)} className={styles.textButton}>
-                Learn More
+                <Text c="elv-blue.3" fw={700} fz={14}>
+                  Learn More
+                </Text>
               </Button>
             )
           }
