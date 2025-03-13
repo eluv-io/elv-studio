@@ -24,9 +24,9 @@ const TextCard = ({title, message, rightSection, complete=false}) => {
         </Group>
         {
           rightSection &&
-          <Box ml="auto">
+          <Flex ml="auto">
             { rightSection }
-          </Box>
+          </Flex>
         }
       </Flex>
     </Box>
