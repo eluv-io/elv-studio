@@ -1,4 +1,4 @@
-import {ActionIcon, Box, Flex, Text, Tooltip} from "@mantine/core";
+import {ActionIcon, Box, Flex, Text, Title, Tooltip} from "@mantine/core";
 import {CopyIcon} from "@/assets/icons/index.jsx";
 import {useClipboard} from "@mantine/hooks";
 import LinkIcon from "@/assets/icons/LinkIcon.jsx";
@@ -41,7 +41,7 @@ export const DetailRow = ({
   clickTitle,
   href,
   Icon,
-  mb=8
+  mb=5
 }) => {
   const clipboard = useClipboard();
 
@@ -68,16 +68,16 @@ export const DetailRow = ({
         mb={mb}
         w="100%"
       >
-        <Text
-          fw={700}
-          fz={14}
+        <Title
+          order={3}
+          c="elv-gray.9"
           pr="0.5rem"
           wrap="no-wrap"
           style={{whiteSpace: "nowrap"}}
         >
           { `${label}:` }
-        </Text>
-        <Text truncate="end" fz={14} fw={400} maw={"100%"}>
+        </Title>
+        <Text truncate="end" fz={14} fw={500} c="elv-gray.9" maw={"100%"}>
           { value || "" }
         </Text>
         {

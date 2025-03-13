@@ -3,6 +3,7 @@ import {ingestStore} from "@/stores/index.js";
 import PrettyBytes from "pretty-bytes";
 import {Box} from "@mantine/core";
 import DetailRow from "@/pages/job-details/common/DetailsCommon.jsx";
+import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 
 const DetailsInfo = observer(({jobId}) => {
   const separateMasterMez = ingestStore.jobs[jobId].formData?.mez.newObject;
@@ -96,7 +97,8 @@ const DetailsInfo = observer(({jobId}) => {
   }
 
   return (
-    <Box w="100%" mb={12}>
+    <Box w="100%" mb={19}>
+      <SectionTitle mb={19}>Details</SectionTitle>
       {
         infoValues
           .filter(item => !item.hidden)

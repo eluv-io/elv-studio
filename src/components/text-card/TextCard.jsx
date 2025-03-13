@@ -1,26 +1,27 @@
-import {Box, Flex, Stack, Text} from "@mantine/core";
+import {Box, Flex, Group, Text} from "@mantine/core";
 
-const TextCard = ({title, message, rightSection}) => {
+const TextCard = ({title, message, rightSection, complete=false}) => {
   return (
     <Box
-      bg="elv-gray.0"
+      bg={complete ? "elv-blue.0" : "white"}
+      bd="1px solid var(--mantine-color-elv-gray-0)"
       mb={16}
-      p="1.5rem 1rem"
-      style={{borderRadius: "7px"}}
+      p="9px 12px"
+      style={{borderRadius: "6px"}}
     >
       <Flex align="center" direction="row">
-        <Stack gap={0}>
+        <Group gap={0}>
           {
             title &&
-            <Text>{ title }</Text>
+            <Text c="elv-gray.6" fw={500}>{ title }</Text>
           }
           {
             message &&
-            <Text pt={4}>
+            <Text fw={500} c="elv-gray.6">
               { message }
             </Text>
           }
-        </Stack>
+        </Group>
         {
           rightSection &&
           <Box ml="auto">

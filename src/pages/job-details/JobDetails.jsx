@@ -138,8 +138,13 @@ const JobDetails = observer(() => {
   return (
     <PageContainer
       title={ingestStore.jobs[jobId].formData?.master.title || jobId}
-      width="810px"
-      BackLinkCallback={() => navigate("/jobs")}
+      width="95%"
+      mb={19}
+      titleLeftSection={
+        <Button color="elv-gray.6" onClick={() => navigate("/jobs")}>
+          Back
+        </Button>
+      }
     >
       <DetailsInfo jobId={jobId} />
       <DetailsProgress jobId={jobId} />

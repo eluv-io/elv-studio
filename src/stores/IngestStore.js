@@ -931,7 +931,7 @@ class IngestStore {
             ingest: {
               runState: run_state,
               estimatedTimeLeft:
-              (estimated_time_left_seconds === undefined && run_state === "running") ? "Calculating..." : estimated_time_left_h_m_s ? `${estimated_time_left_h_m_s} remaining` : ""
+              (estimated_time_left_seconds === undefined && run_state === "running") ? "Calculating" : estimated_time_left_h_m_s ? `${estimated_time_left_h_m_s} remaining` : ""
             },
             formData: {
               ...this.jobs[masterObjectId].formData,

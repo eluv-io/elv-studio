@@ -57,11 +57,32 @@ const TopActions = ({actions=[]}) => {
   );
 };
 
+const TitleSection = ({title, leftSection, centerTitle, mb}) => {
+  return (
+    <Flex
+      justify={centerTitle ? "center" : "flex-start"}
+      gap={16}
+      direction="row"
+      align="center"
+      mb={mb}
+    >
+      {
+        leftSection ? leftSection : null
+      }
+      <Title order={1} c="elv-gray.9">
+        { title }
+      </Title>
+    </Flex>
+  );
+};
+
 const PageContainer = ({
   title,
+  titleLeftSection,
   children,
   centerTitle=false,
   width="100%",
+  mb="12",
   error,
   actions
 }) => {
@@ -70,14 +91,7 @@ const PageContainer = ({
       <Box p="24 46 46">
         <AlertMessage error={error} />
         <TopActions actions={actions} />
-        {
-          title &&
-          <Flex justify={centerTitle ? "center" : "flex-start"}>
-            <Title order={1} c="elv-gray.9" mb={12}>
-              { title }
-            </Title>
-          </Flex>
-        }
+        <TitleSection title={title} leftSection={titleLeftSection} centerTitle={centerTitle} mb={mb} />
         { children }
       </Box>
     </Box>

@@ -43,8 +43,8 @@ const DetailsFinalizeInfo = observer(({jobId}) => {
 
   return (
     <>
-      <Divider mb={12} />
-      <SectionTitle>Mezzanine Object Details</SectionTitle>
+      <Divider mb={19} />
+      <SectionTitle mb={19}>Mezzanine Object Details</SectionTitle>
       {
         VALUES.map(({label, value, copyable, onClick, href, clickTitle}) => (
           <DetailRow
