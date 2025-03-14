@@ -8,10 +8,10 @@ import styles from "./DetailsProgress.module.css";
 
 const DetailsProgress = observer(({jobId}) => {
   return (
-    <Box mb={19} className={styles.container}>
+    <Box mb={19} w="100%">
       <SectionTitle mb={19}>Progress</SectionTitle>
 
-      <SimpleGrid cols={2} spacing={150}>
+      <SimpleGrid cols={2} spacing={30}>
         <TextCard
           title="Upload"
           message={
@@ -30,7 +30,7 @@ const DetailsProgress = observer(({jobId}) => {
         />
       </SimpleGrid>
 
-      <SimpleGrid cols={2} spacing={150}>
+      <SimpleGrid cols={2} spacing={30}>
         <TextCard
           title="Convert to streaming format"
           message={
@@ -50,7 +50,7 @@ const DetailsProgress = observer(({jobId}) => {
         />
       </SimpleGrid>
 
-      <SimpleGrid cols={2} spacing={150}>
+      <SimpleGrid cols={2} spacing={30}>
         <TextCard
           title="Finalize"
           rightSection={
