@@ -1,6 +1,6 @@
-import {Box, Flex, Group, Text} from "@mantine/core";
+import {Box, Flex, Group, Progress, Text} from "@mantine/core";
 
-const TextCard = ({title, message, rightSection, complete=false}) => {
+const TextCard = ({title, message, rightSection, complete=false, percentage}) => {
   return (
     <Box
       bg={complete ? "elv-blue.0" : "white"}
@@ -8,8 +8,23 @@ const TextCard = ({title, message, rightSection, complete=false}) => {
       mb={16}
       p="9px 12px"
       style={{borderRadius: "6px"}}
+      pos="relative"
     >
-      <Flex align="center" direction="row">
+      {
+        (percentage && typeof percentage === "number") ?
+        <Progress
+          value={percentage}
+          color="elv-blue.0"
+          bg="white"
+          pos="absolute"
+          top={0}
+          left={0}
+          w="100%"
+          h="100%"
+          style={{zIndex: 0}}
+        /> : null
+      }
+      <Flex align="center" direction="row" pos="relative" style={{zIndex: 1}}>
         <Group gap={0}>
           {
             title &&

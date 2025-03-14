@@ -26,6 +26,7 @@ const DetailsProgress = observer(({jobId}) => {
                 <CheckmarkIcon className={styles.itemIcon} /> : <Loader size={20} />
           }
           complete={ingestStore.jobs[jobId].upload.runState === "finished"}
+          percentage={ingestStore.jobs[jobId].upload.percentage}
         />
       </SimpleGrid>
 
