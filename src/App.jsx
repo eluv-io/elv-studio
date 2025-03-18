@@ -1,30 +1,50 @@
-import {PageLoader} from "@/components/common/Loader.jsx";
-import {HashRouter} from "react-router-dom";
-import JobsWrapper from "@/pages/jobs/JobsWrapper.jsx";
+import {BrowserRouter} from "react-router-dom";
 import {observer} from "mobx-react-lite";
-import LeftNavigation from "@/components/LeftNavigation.jsx";
-import WarningDialog from "@/components/WarningDialog.jsx";
-import {rootStore} from "@/stores/index.js";
 import AppRoutes from "./Routes.jsx";
-import {MantineProvider} from "@mantine/core";
+
+import SideNavigation from "@/components/side-navigation/SideNavigation.jsx";
+import ConfirmModal from "@/components/confirm-modal/ConfirmModal.jsx";
+import JobsWrapper from "@/pages/jobs/wrapper/JobsWrapper.jsx";
+import {ingestStore, rootStore, uiStore} from "@/stores/index.js";
+import MantineTheme from "@/assets/MantineTheme.js";
+
+import {AppShell, Loader, MantineProvider} from "@mantine/core";
+
 import "@mantine/core/styles.css";
+import "@mantine/dropzone/styles.css";
+import "mantine-datatable/styles.css";
+import "./assets/GlobalStyles.css";
 
 const App = observer(() => {
-  if(!rootStore.loaded) { return <PageLoader />; }
-
   return (
-    <MantineProvider withCssVariables>
-      <HashRouter>
-        <div className="app-container">
-          <LeftNavigation />
-          <main>
-            <JobsWrapper>
-              <AppRoutes />
-            </JobsWrapper>
-            <WarningDialog />
-          </main>
-        </div>
-      </HashRouter>
+    <MantineProvider withCssVariables theme={{colorScheme: uiStore.theme, ...MantineTheme}}>
+      <BrowserRouter>
+        <AppShell
+          padding={0}
+          navbar={{width: 200, breakpoint: "sm"}}
+        >
+          <SideNavigation />
+          <AppShell.Main>
+            {
+              rootStore.loaded ?
+                (
+                  <JobsWrapper>
+                    <AppRoutes />
+                  </JobsWrapper>
+                ) : <Loader />
+            }
+            <ConfirmModal
+              show={ingestStore.showDialog}
+              title={ingestStore.dialog.title}
+              message={ingestStore.dialog.description}
+              confirmText="Yes"
+              cancelText="No"
+              CloseCallback={() => ingestStore.HideWarningDialog("NO")}
+              ConfirmCallback={() => ingestStore.HideWarningDialog("YES")}
+            />
+          </AppShell.Main>
+        </AppShell>
+      </BrowserRouter>
     </MantineProvider>
   );
 });

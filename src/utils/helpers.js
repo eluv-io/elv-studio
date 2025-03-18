@@ -41,3 +41,26 @@ export const CopyToClipboard = ({text}) => {
       }
     });
 };
+
+export const SortTable = ({sortStatus, AdditionalCondition}) => {
+  return (a, b) => {
+    if(AdditionalCondition && typeof AdditionalCondition(a, b) !== "undefined") {
+      return AdditionalCondition(a, b);
+    }
+
+    a = a[sortStatus.columnAccessor]?.trim();
+    b = b[sortStatus.columnAccessor]?.trim();
+
+    if(typeof a === "number" && typeof b === "number") {
+      a = isNaN(a) ? 0 : a;
+      b = isNaN(b) ? 0 : b;
+    } else {
+      a = typeof a === "string" ? a.toLowerCase() : a ?? "";
+      b = typeof b === "string" ? b.toLowerCase() : b ?? "";
+    }
+
+    if(a === b) { return 0; }
+
+    return (a < b ? -1 : 1) * (sortStatus.direction === "asc" ? 1 : -1);
+  };
+};

@@ -1,0 +1,27 @@
+.mantine-TextInput-input::placeholder,
+.mantine-Textarea-input::placeholder,
+.mantine-Select-input::placeholder {
+  color: var(--mantine-color-elv-gray-6);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mantine-Radio-radio {
+  outline-color: var(--mantine-color-elv-neutral-2);
+}
+
+.mantine-InputWrapper-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.mantine-datatable-header {
+  color: var(--mantine-color-elv-gray-9);
+}
+
+.mantine-datatable-empty-state .mantine-Text-root {
+  color: var(--mantine-color-elv-gray-9);
+  font-weight: 500;
+  font-size: 0.875rem;
+}

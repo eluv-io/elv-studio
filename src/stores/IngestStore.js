@@ -931,7 +931,7 @@ class IngestStore {
             ingest: {
               runState: run_state,
               estimatedTimeLeft:
-              (estimated_time_left_seconds === undefined && run_state === "running") ? "Calculating..." : estimated_time_left_h_m_s ? `${estimated_time_left_h_m_s} remaining` : ""
+              (estimated_time_left_seconds === undefined && run_state === "running") ? "Calculating" : estimated_time_left_h_m_s ? `${estimated_time_left_h_m_s} remaining` : ""
             },
             formData: {
               ...this.jobs[masterObjectId].formData,
@@ -991,7 +991,7 @@ class IngestStore {
             });
           }
 
-          this.FinalizeABRMezzanine({
+          await this.FinalizeABRMezzanine({
             libraryId,
             objectId,
             masterObjectId
@@ -1089,6 +1089,12 @@ class IngestStore {
 
       const formData = this.jobs[masterObjectId].formData;
       delete formData.master.abr;
+
+      yield this.WaitForPublish({
+        hash: finalizeAbrResponse.hash,
+        objectId,
+        libraryId
+      });
 
       this.UpdateIngestObject({
         id: masterObjectId,
