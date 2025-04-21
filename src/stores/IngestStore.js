@@ -110,6 +110,23 @@ class IngestStore {
     );
   };
 
+  LoadJobs() {
+    const localStorageJobs = localStorage.getItem("elv-jobs");
+    if(localStorageJobs) {
+      const parsedJobs = JSON.parse(this.rootStore.Decode(localStorageJobs));
+
+      Object.keys(parsedJobs || {}).forEach(jobId => {
+        const item = parsedJobs[jobId];
+        item["_title"] = item.formData?.master?.title;
+        item["_objectId"] = jobId;
+      });
+
+      this.UpdateIngestJobs({jobs: parsedJobs});
+    } else {
+      this.UpdateIngestJobs({jobs: {}});
+    }
+  }
+
   ShowWarningDialog = flow(function * ({title, description}) {
     this.showDialog = true;
     this.dialog = {
