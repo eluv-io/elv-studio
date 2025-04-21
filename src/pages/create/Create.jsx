@@ -527,9 +527,11 @@ const Create = observer(() => {
                     files.map((file, index) => (
                       <Box
                         key={`${file.name || file.path}-${index}`}
-                        bg="elv-gray.0"
-                        p={16}
-                        bd={file.errors ? "2px solid elv-red.4" : "1px solid transparent"}
+                        bg={"elv-blue.0"}
+                        bd={file.errors ? "2px solid elv-red.4" : "1px solid var(--mantine-color-elv-gray-0)"}
+                        mb={16}
+                        p="9px 12px"
+                        style={{borderRadius: "6px"}}
                       >
                         <Stack>
                           <Flex

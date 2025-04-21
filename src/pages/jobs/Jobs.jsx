@@ -47,12 +47,8 @@ const Jobs = observer(() => {
     }
   };
 
-  const records = Object.keys(ingestStore.jobs || {}).map(id => {
-    const item = ingestStore.jobs[id];
-    item["_title"] = item.formData?.master?.title;
-    item["_objectId"] = id;
-    return item;
-  })
+  const records = Object.keys(ingestStore.jobs || {})
+    .map(id => ingestStore.jobs[id])
     .sort(SortTable({sortStatus}));
 
   return (

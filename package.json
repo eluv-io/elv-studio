@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@eluvio/elv-abr-profile": "^1.0.1",
-    "@eluvio/elv-client-js": "^4.0.117",
+    "@eluvio/elv-client-js": "github:eluv-io/elv-client-js#media-ingest-changes",
     "@eluvio/elv-lro-status": "^3.0.8",
     "@mantine/core": "^7.15.1",
     "@mantine/dropzone": "^7.15.1",
@@ -43,7 +43,6 @@
     "@babel/preset-env": "^7.18.0",
     "@babel/preset-react": "^7.17.12",
     "@vitejs/plugin-react-swc": "^3.6.0",
-    "eslint": "^8.57.0",
     "eslint": "^8.57.1",
     "eslint-plugin-react": "^7.34.4",
     "eslint-plugin-react-hooks": "^5.1.0",
