@@ -18,7 +18,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@eluvio/elv-abr-profile": "^1.0.1",
+    "@eluvio/elv-abr-profile": "^1.0.2",
     "@eluvio/elv-client-js": "^4.0.117",
     "@eluvio/elv-lro-status": "^3.0.8",
     "@mantine/core": "^7.15.1",
