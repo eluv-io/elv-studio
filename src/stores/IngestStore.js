@@ -752,8 +752,7 @@ class IngestStore {
           libraryId,
           objectId: masterObjectId,
           writeToken,
-          commitMessage: "Create master object",
-          awaitCommitConfirmation: false
+          commitMessage: "Create master object"
         });
       } catch(error) {
         return this.HandleError({
@@ -1112,20 +1111,21 @@ class IngestStore {
     });
 
     try {
-      const finalizeAbrResponse = yield this.client.FinalizeABRMezzanine({
+      yield this.client.FinalizeABRMezzanine({
         libraryId,
         objectId,
         writeToken
       });
 
+      const finalizeAbrResponse = yield this.client.FinalizeContentObject({
+        libraryId,
+        objectId,
+        writeToken,
+        commitMessage: "Create ABR mezzanine"
+      });
+
       const formData = this.jobs[masterObjectId || finalizeAbrResponse.id].formData;
       delete formData.master.abr;
-
-      yield this.WaitForPublish({
-        hash: finalizeAbrResponse.hash,
-        objectId,
-        libraryId
-      });
 
       this.UpdateIngestObject({
         id: masterObjectId,
