@@ -471,15 +471,14 @@ class IngestStore {
     access=[],
     copy,
     masterObjectId,
-    writeToken
+    writeToken,
+    finalize=true
   }) {
     ValidateLibrary(libraryId);
 
     if(writeToken) {
       ValidateWriteToken(writeToken);
     }
-
-    const finalize = !writeToken;
 
     this.UpdateIngestObject({
       id: masterObjectId,
@@ -827,6 +826,13 @@ class IngestStore {
   }) {
     let createResponse;
     const jobIdRef = masterObjectId || jobId;
+
+    if(newObject) {
+      ({writeToken} = yield this.client.CreateContentObject({
+        libraryId,
+        options: type ? {type} : {}
+      }));
+    }
 
     try {
       createResponse = yield this.client.CreateABRMezzanine({

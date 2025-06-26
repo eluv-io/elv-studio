@@ -115,7 +115,8 @@ const JobDetails = observer(() => {
       masterObjectId: jobId,
       writeToken,
       playbackEncryption,
-      displayTitle: mezFormData.displayTitle
+      displayTitle: mezFormData.displayTitle,
+      finalize: mezFormData.newObject
     });
 
     if(!response) { return; }
