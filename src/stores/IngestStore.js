@@ -440,7 +440,9 @@ class IngestStore {
             masterObjectId: createResponse.id,
             masterWriteToken: createResponse.writeToken,
             masterNodeUrl: createResponse.nodeUrl,
-            contentType: mezContentType
+            contentType: mezContentType,
+            _title: formData.master.title,
+            _objectId: createResponse.id
           }
         });
 
