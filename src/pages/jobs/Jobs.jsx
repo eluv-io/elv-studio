@@ -4,10 +4,11 @@ import {ingestStore} from "@/stores";
 import PageContainer from "@/components/page-container/PageContainer.jsx";
 import {DataTable} from "mantine-datatable";
 import {useNavigate} from "react-router-dom";
-import {Box, Button, Title} from "@mantine/core";
+import {Box, Button, Group, Title} from "@mantine/core";
 
 import styles from "./Jobs.module.css";
 import ConfirmModal from "@/components/confirm-modal/ConfirmModal.jsx";
+import CopyButton from "@/components/common/copy-button/CopyButton.jsx";
 import {SortTable} from "@/utils/helpers.js";
 
 const Jobs = observer(() => {
@@ -90,7 +91,16 @@ const Jobs = observer(() => {
           rowClassName={() => styles.row}
           columns={[
             { accessor: "_title", title: "Name", sortable: true, render: record => <Title order={4} c="elv-gray.9">{ record._title }</Title> },
-            { accessor: "_objectId", title: "Object ID", sortable: true, render: record => <Title order={4} c="elv-gray.9">{ record._objectId }</Title> },
+            {
+              accessor: "_objectId",
+              title: "Object ID",
+              sortable: true,
+              render: record => (
+                <Group>
+                  <CopyButton value={record._objectId} />
+                </Group>
+              )
+            },
             {
               accessor: "_status",
               title: "Status",
