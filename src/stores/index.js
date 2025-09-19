@@ -31,7 +31,7 @@ class RootStore {
     try {
       this.client = new FrameClient({
         target: window.parent,
-        timeout: 60
+        timeout: 60 * 10 // seconds
       });
       window.client = this.client;
 
