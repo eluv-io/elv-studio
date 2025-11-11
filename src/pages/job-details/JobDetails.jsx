@@ -92,17 +92,31 @@ const JobDetails = observer(() => {
   useEffect(() => {
     ingestStore.SetJob(jobId);
 
-    HandleIngest();
+    HandleJobProcessing();
   }, []);
 
-  const HandleIngest = async () => {
-    if(ingestStore.job.currentStep !== "create" || ingestStore.job.create.runState !== "finished") { return; }
+  const HandleJobProcessing = async () => {
+    const job = ingestStore.job;
 
+    // Job already complete or has error - nothing to do
+    if(job.currentStep === "complete" || job.error) { return; }
+
+    // Newly created job - start processing from upload step
+    if(job.currentStep === "create" && job.create.runState === "finished") {
+      await StartNewJob();
+    }
+    // Incomplete job - resume from current step
+    else if(job.currentStep !== "create" && job.currentStep !== "complete") {
+      await ResumeIncompleteJob();
+    }
+  };
+
+  const StartNewJob = async () => {
     const {abr, access, copy, files, libraryId, title, accessGroup, description, s3Url, writeToken, playbackEncryption} = ingestStore.job.formData.master;
     const mezFormData = ingestStore.job.formData.mez;
     const {contentType} = ingestStore.job.formData;
 
-    const response = await ingestStore.CreateProductionMaster({
+    const params = {
       libraryId,
       files,
       title,
@@ -112,36 +126,43 @@ const JobDetails = observer(() => {
       accessGroupAddress: accessGroup,
       access: JSON.parse(access),
       copy,
-      masterObjectId: jobId,
       writeToken,
       playbackEncryption,
-      displayTitle: mezFormData.displayTitle
-    });
-
-    if(!response) { return; }
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    await ingestStore.WaitForPublish({
-      hash: response.hash,
-      objectId: jobId,
-      libraryId: libraryId
-    });
-
-    await ingestStore.CreateABRMezzanine({
-      libraryId: mezFormData.libraryId,
-      masterObjectId: response.id,
-      masterVersionHash: response.hash,
-      abrProfile: response.abrProfile,
-      type: contentType,
-      name: mezFormData.name,
-      accessGroupAddress: mezFormData.accessGroup,
-      description: mezFormData.description,
       displayTitle: mezFormData.displayTitle,
-      newObject: mezFormData.newObject,
-      access: JSON.parse(access),
-      permission: mezFormData.permission
-    });
+      mezLibrary: mezFormData.libraryId,
+      mezFormData,
+      contentType
+    };
+
+    // Continue to upload step
+    const uploadResult = await ingestStore.AdvanceJob({jobId, params});
+    if(!uploadResult.success) { return; }
+
+    // Wait for publish
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const response = uploadResult.result;
+    if(response?.hash) {
+      await ingestStore.WaitForPublish({
+        hash: response.hash,
+        objectId: jobId,
+        libraryId: libraryId
+      });
+    }
+
+    // Continue to ingest step
+    await ingestStore.AdvanceJob({jobId, params});
+  };
+
+  const ResumeIncompleteJob = async () => {
+    // Resume job from its current step
+    // Note: For upload resume, we need the original files/credentials
+    // If they're not available in sessionStorage, job will fail with appropriate error
+    const result = await ingestStore.ResumeJob({jobId});
+
+    if(!result.success) {
+      // eslint-disable-next-line no-console
+      console.warn(`Could not resume job ${jobId}:`, result.error);
+    }
   };
 
   if(!ingestStore.job) { return <Loader />; }

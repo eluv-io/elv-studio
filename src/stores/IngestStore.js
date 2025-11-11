@@ -22,6 +22,29 @@ class IngestStore {
   };
   dialogResponse = null;
 
+  jobStateMachine = {
+    create: {
+      next: "upload",
+      action: "CreateContentObject"
+    },
+    upload: {
+      next: "ingest",
+      action: "CreateProductionMaster"
+    },
+    ingest: {
+      next: "finalize",
+      action: "CreateABRMezzanine"
+    },
+    finalize: {
+      next: "complete",
+      action: "FinalizeABRMezzanine"
+    },
+    complete: {
+      next: null,
+      action: null
+    }
+  };
+
   constructor(rootStore) {
     makeAutoObservable(this);
 
@@ -377,6 +400,133 @@ class IngestStore {
       console.error("Failed to add new object to content admins group:");
       // eslint-disable-next-line no-console
       console.error(error);
+    }
+  });
+
+  // Orchestration Functions - manage job workflow
+
+  // Execute the current step of a job and advance to next state
+  AdvanceJob = flow(function* ({jobId, params = {}}) {
+    const job = this.jobs[jobId];
+    if(!job) {
+      throw new Error(`Job ${jobId} not found`);
+    }
+
+    const currentState = this.jobStateMachine[job.currentStep || "create"];
+
+    if(!currentState) {
+      throw new Error(`Invalid job state: ${job.currentStep}`);
+    }
+
+    // If already complete, nothing to do
+    if(currentState.next === null) {
+      return {success: true, jobId, state: "complete"};
+    }
+
+    const actionName = currentState.action;
+    const actionFn = this[actionName];
+
+    if(!actionFn) {
+      throw new Error(`Action ${actionName} not found`);
+    }
+
+    try {
+      // Execute the current step's action
+      // Note: The action functions handle their own state transitions
+      const result = yield actionFn.call(this, {
+        ...params,
+        ...job.formData,
+        masterObjectId: jobId,
+        objectId: jobId
+      });
+
+      // Check if there was an error
+      if(job.error) {
+        return {success: false, jobId, error: job.errorMessage};
+      }
+
+      // Return the result (currentStep is already updated by the action function)
+      return {success: true, jobId, state: job.currentStep, result};
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`Error in job ${jobId} at step ${job.currentStep}:`, error);
+      return {success: false, jobId, error: error.message};
+    }
+  });
+
+  // Create a new playable media file job and execute all steps
+  CreatePlayableMediaJob = flow(function* ({formData}) {
+    try {
+      // Step 1: Create the content object (this returns the jobId)
+      const createResponse = yield this.CreateContentObject({
+        libraryId: formData.master.libraryId,
+        mezContentType: formData.contentType,
+        formData
+      });
+
+      const jobId = createResponse.id;
+
+      // Step 2-4: Execute remaining steps (upload, ingest, finalize)
+      // Note: Each step will be executed by AdvanceJob, which checks the current state
+      while (this.jobs[jobId] && this.jobs[jobId].currentStep !== "complete" && !this.jobs[jobId].error) {
+        const result = yield this.AdvanceJob({
+          jobId,
+          params: {
+            libraryId: formData.master.libraryId,
+            files: formData.master.files,
+            writeToken: this.jobs[jobId].masterWriteToken,
+            mezLibrary: formData.mez.libraryId
+          }
+        });
+
+        if (!result.success) {
+          return {success: false, jobId, error: result.error};
+        }
+      }
+
+      return {success: true, jobId};
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error creating playable media job:", error);
+      return {success: false, error: error.message};
+    }
+  });
+
+  // Resume an incomplete job from its current state
+  ResumeJob = flow(function* ({jobId}) {
+    const job = this.jobs[jobId];
+
+    if (!job) {
+      // eslint-disable-next-line no-console
+      console.warn(`Cannot resume job ${jobId}: not found`);
+      return {success: false, error: "Job not found"};
+    }
+
+    if (job.currentStep === "complete") {
+      return {success: true, jobId, message: "Job already complete"};
+    }
+
+    if (job.error) {
+      // eslint-disable-next-line no-console
+      console.warn(`Cannot resume job ${jobId}: job has error`);
+      return {success: false, jobId, error: job.errorMessage};
+    }
+
+    try {
+      // Continue from current step until complete
+      while (job.currentStep !== "complete" && !job.error) {
+        const result = yield this.AdvanceJob({jobId});
+
+        if (!result.success) {
+          return {success: false, jobId, error: result.error};
+        }
+      }
+
+      return {success: true, jobId};
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`Error resuming job ${jobId}:`, error);
+      return {success: false, jobId, error: error.message};
     }
   });
 
