@@ -1,13 +1,20 @@
-import {ActionIcon, Group, Text, Tooltip} from "@mantine/core";
+import {ActionIcon, Group, Text, Tooltip, TooltipProps} from "@mantine/core";
 import {useClipboard} from "@mantine/hooks";
 import {IconCopy} from "@tabler/icons-react";
+
+interface CopyButtonProps {
+  value: string;
+  copyText: string;
+  copiedText?: string;
+  position: TooltipProps["position"];
+}
 
 const CopyButton = (({
   value,
   copyText="Copy",
   copiedText="Copied",
   position="bottom"
-}) => {
+}: CopyButtonProps) => {
   const clipboard = useClipboard();
 
   return (

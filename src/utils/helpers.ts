@@ -1,15 +1,19 @@
-const FallbackCopyToClipboard = ({text}) => {
+interface CopyToClipboardParams {
+  text: string;
+}
+
+const FallbackCopyToClipboard = ({text}: CopyToClipboardParams) => {
   const element = document.createElement("textarea");
   element.value = text;
-  element.style.all = "unset";
+  (element.style as any).all = "unset";
   // Avoid screen readers from reading text out loud
   element.ariaHidden = "true";
   // used to preserve spaces and line breaks
   element.style.whiteSpace = "pre";
   // do not inherit user-select (it may be `none`)
-  element.style.webkitUserSelect = "text";
-  element.style.MozUserSelect = "text";
-  element.style.msUserSelect = "text";
+  (element.style as any).webkitUserSelect = "text";
+  (element.style as any).MozUserSelect = "text";
+  (element.style as any).msUserSelect = "text";
   element.style.userSelect = "text";
 
   document.body.appendChild(element);
@@ -25,7 +29,7 @@ const FallbackCopyToClipboard = ({text}) => {
   }
 };
 
-export const CopyToClipboard = ({text}) => {
+export const CopyToClipboard = ({text}: CopyToClipboardParams) => {
   if(!navigator.clipboard) {
     FallbackCopyToClipboard({text});
     return;
@@ -42,8 +46,19 @@ export const CopyToClipboard = ({text}) => {
     });
 };
 
-export const SortTable = ({sortStatus, AdditionalCondition}) => {
-  return (a, b) => {
+interface SortStatus {
+  columnAccessor: string;
+  direction: "asc" | "desc";
+}
+
+interface SortTableParams {
+  sortStatus: SortStatus;
+  // eslint-disable-next-line no-unused-vars
+  AdditionalCondition?: (a: any, b: any) => number | undefined;
+}
+
+export const SortTable = ({sortStatus, AdditionalCondition}: SortTableParams) => {
+  return (a: any, b: any) => {
     if(AdditionalCondition && typeof AdditionalCondition(a, b) !== "undefined") {
       return AdditionalCondition(a, b);
     }

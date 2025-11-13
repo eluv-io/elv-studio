@@ -9,7 +9,7 @@ import {Box, Button, Group, Title} from "@mantine/core";
 import styles from "./Jobs.module.css";
 import ConfirmModal from "@/components/confirm-modal/ConfirmModal.tsx";
 import CopyButton from "@/components/common/copy-button/CopyButton.tsx";
-import {SortTable} from "@/utils/helpers.js";
+import {SortTable} from "@/utils/helpers";
 
 const Jobs = observer(() => {
   const [showClearJobsDialog, setShowClearJobsDialog] = useState(false);

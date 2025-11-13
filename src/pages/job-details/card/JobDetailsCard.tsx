@@ -1,5 +1,5 @@
 import {ActionIcon, Anchor, Button, Flex, Text, Tooltip} from "@mantine/core";
-import {CopyToClipboard} from "@/utils/helpers.js";
+import {CopyToClipboard} from "@/utils/helpers";
 import {CopyIcon} from "@/assets/icons/index.tsx";
 import {useState} from "react";
 import {observer} from "mobx-react-lite";

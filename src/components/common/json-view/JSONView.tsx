@@ -1,10 +1,15 @@
 import {ActionIcon, Box, Code, Tooltip} from "@mantine/core";
-import {CopyToClipboard} from "@/utils/helpers.js";
+import {CopyToClipboard} from "@/utils/helpers";
 import {CopyIcon} from "@/assets/icons/index.tsx";
 import {useState} from "react";
 import styles from "./JSONView.module.css";
 
-const JSONView = ({json, copyable=false}) => {
+interface JSONViewProps {
+  json: string;
+  copyable?: boolean;
+}
+
+const JSONView = ({json, copyable=false}: JSONViewProps) => {
   const [copied, setCopied] = useState(false);
 
   return (
@@ -34,7 +39,7 @@ const JSONView = ({json, copyable=false}) => {
 
                   setTimeout(() => {
                     setCopied(false);
-                  }, [3000]);
+                  }, 3000);
                 }}
               >
                 <CopyIcon color="var(--mantine-color-elv-gray-6)" />
