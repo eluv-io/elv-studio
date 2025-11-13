@@ -1,5 +1,5 @@
 import {observer} from "mobx-react-lite";
-import {Navigate, Route, Routes} from "react-router-dom";
+import {Navigate, Route, Routes} from "react-router";
 import Jobs from "@/pages/jobs/Jobs.jsx";
 import JobDetails from "@/pages/job-details/JobDetails.jsx";
 import Create from "@/pages/create/Create.jsx";

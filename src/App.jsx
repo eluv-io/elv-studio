@@ -1,4 +1,4 @@
-import {BrowserRouter} from "react-router-dom";
+import {BrowserRouter} from "react-router";
 import {observer} from "mobx-react-lite";
 import AppRoutes from "./Routes.jsx";
 
