@@ -1,8 +1,15 @@
-import {Alert, Box, Button, Flex, Title} from "@mantine/core";
-import {useEffect, useRef} from "react";
+import {Alert, Box, Button, Flex, Title, ButtonProps, BoxProps} from "@mantine/core";
+import {ReactNode, useEffect, useRef} from "react";
 
-const AlertMessage = ({error}) => {
-  const errorRef = useRef(null);
+interface AlertMessageProps {
+  error: {
+    title: string;
+    message: string;
+  };
+}
+
+const AlertMessage = ({error}: AlertMessageProps) => {
+  const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if(errorRef && errorRef.current) {
@@ -28,7 +35,17 @@ const AlertMessage = ({error}) => {
   );
 };
 
-const TopActions = ({actions=[]}) => {
+interface TopActionsProps {
+  actions: {
+    label: string;
+    variant?: ButtonProps["variant"];
+    onClick?: () => void;
+    disabled: boolean;
+    leftSection?: ReactNode;
+  }[];
+}
+
+const TopActions = ({actions=[]}: TopActionsProps) => {
   if(actions.length === 0) { return null; }
 
   return (
@@ -57,7 +74,14 @@ const TopActions = ({actions=[]}) => {
   );
 };
 
-const TitleSection = ({title, leftSection, centerTitle, mb}) => {
+interface TitleSectionProps {
+  title: string;
+  leftSection?: ReactNode;
+  centerTitle?: boolean;
+  mb: BoxProps["mb"];
+}
+
+const TitleSection = ({title, leftSection, centerTitle, mb}: TitleSectionProps) => {
   return (
     <Flex
       justify={centerTitle ? "center" : "flex-start"}
@@ -76,6 +100,17 @@ const TitleSection = ({title, leftSection, centerTitle, mb}) => {
   );
 };
 
+interface PageContainerProps {
+  title: string;
+  titleLeftSection?: ReactNode;
+  children: ReactNode;
+  centerTitle?: boolean;
+  width?: BoxProps["w"];
+  mb?: BoxProps["mb"];
+  error: AlertMessageProps["error"];
+  actions: TopActionsProps["actions"];
+}
+
 const PageContainer = ({
   title,
   titleLeftSection,
@@ -85,7 +120,7 @@ const PageContainer = ({
   mb="12",
   error,
   actions
-}) => {
+}: PageContainerProps) => {
   return (
     <Box w={width}>
       <Box p="24 46 46">
