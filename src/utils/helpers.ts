@@ -1,3 +1,5 @@
+import {LogError} from "./errors";
+
 interface CopyToClipboardParams {
   text: string;
 }
@@ -24,8 +26,7 @@ const FallbackCopyToClipboard = ({text}: CopyToClipboardParams) => {
     document.execCommand("copy");
     document.body.removeChild(element);
   } catch(error) {
-    // eslint-disable-next-line no-console
-    console.error("Unable to copy to clipboard", error);
+    LogError("Unable to copy to clipboard", error);
   }
 };
 
@@ -40,8 +41,7 @@ export const CopyToClipboard = ({text}: CopyToClipboardParams) => {
       if(error instanceof DOMException && error.name === "NotAllowedError") {
         FallbackCopyToClipboard({text});
       } else {
-        // eslint-disable-next-line no-console
-        console.error("Unable to copy to clipboard", error);
+        LogError("Unable to copy to clipboard", error);
       }
     });
 };

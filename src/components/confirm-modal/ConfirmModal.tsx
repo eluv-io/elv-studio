@@ -1,6 +1,18 @@
 import {useEffect, useState} from "react";
 import {observer} from "mobx-react-lite";
 import {Button, Flex, Loader, Modal, Text} from "@mantine/core";
+import {GetErrorMessage, LogError} from "@/utils/errors.ts";
+
+interface ConfirmModalProps {
+  message: string;
+  title?: string;
+  ConfirmCallback: () => Promise<void> | undefined;
+  CloseCallback: () => void | undefined;
+  show: boolean;
+  loadingText?: string;
+  cancelText?: string;
+  confirmText?: string;
+}
 
 const ConfirmModal = observer(({
   message,
@@ -11,9 +23,9 @@ const ConfirmModal = observer(({
   loadingText,
   cancelText="Cancel",
   confirmText="Confirm"
-}) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+}: ConfirmModalProps) => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null | undefined>(null);
 
   useEffect(() => {
     setError(null);
@@ -52,12 +64,17 @@ const ConfirmModal = observer(({
             try {
               setError(undefined);
               setLoading(true);
-              await ConfirmCallback();
+
+              if(ConfirmCallback) {
+                await ConfirmCallback();
+              }
+
               CloseCallback();
-            } catch(error) {
-              // eslint-disable-next-line no-console
-              console.error(error);
-              setError(error?.message || error.kind || error.toString());
+            } catch(error: unknown) {
+              LogError(undefined, error);
+
+              const errorDisplay = GetErrorMessage(error);
+              setError(errorDisplay);
             } finally {
               setLoading(false);
             }

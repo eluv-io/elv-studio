@@ -4,7 +4,7 @@ import {IconCopy} from "@tabler/icons-react";
 
 interface CopyButtonProps {
   value: string;
-  copyText: string;
+  copyText?: string;
   copiedText?: string;
   position: TooltipProps["position"];
 }
