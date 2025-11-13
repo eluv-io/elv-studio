@@ -1,6 +1,15 @@
 import {Box, Flex, Group, Progress, Text} from "@mantine/core";
+import {ReactNode} from "react";
 
-const TextCard = ({title, message, rightSection, complete=false, percentage}) => {
+interface TextCardProps {
+  title?: string;
+  message?: string;
+  rightSection?: ReactNode;
+  complete?: boolean;
+  percentage?: number;
+}
+
+const TextCard = ({title, message, rightSection, complete=false, percentage}: TextCardProps) => {
   return (
     <Box
       bg={complete ? "elv-blue.0" : "white"}
@@ -11,7 +20,7 @@ const TextCard = ({title, message, rightSection, complete=false, percentage}) =>
       pos="relative"
     >
       {
-        (percentage && typeof percentage === "number") ?
+        percentage &&
         <Progress
           value={percentage}
           color="elv-blue.0"
@@ -22,7 +31,7 @@ const TextCard = ({title, message, rightSection, complete=false, percentage}) =>
           w="100%"
           h="100%"
           style={{zIndex: 0}}
-        /> : null
+        />
       }
       <Flex align="center" direction="row" pos="relative" style={{zIndex: 1}}>
         <Group gap={0}>

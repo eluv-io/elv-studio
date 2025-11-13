@@ -1,7 +1,13 @@
-import {Title} from "@mantine/core";
+import {BoxProps, Title} from "@mantine/core";
 import styles from "./SectionTitle.module.css";
+import {ReactNode} from "react";
 
-const SectionTitle = ({mb=0, children}) => {
+interface SectionTitleProps {
+  mb?: BoxProps["mb"];
+  children: ReactNode;
+}
+
+const SectionTitle = ({mb=0, children}: SectionTitleProps) => {
   return (
 
     <Title
