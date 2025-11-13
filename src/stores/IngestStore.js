@@ -249,7 +249,7 @@ class IngestStore {
               }));
             } catch(error) {
               // eslint-disable-next-line no-console
-              console.error(`Unable to load metadata for ${libraryId}`);
+              console.error(`Unable to load metadata for ${libraryId}`, error);
             }
 
             if(!response) { return; }

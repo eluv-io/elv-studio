@@ -306,7 +306,7 @@ const Create = observer(() => {
       if(playbackEncryption === "custom" && abrProfile) {
         JSON.parse(abrProfile);
       }
-    } catch(_error) {
+    } catch {
       return false;
     }
 

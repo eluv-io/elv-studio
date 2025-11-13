@@ -4,15 +4,9 @@
     "at-rule-empty-line-before": null,
     "comment-empty-line-before": null,
     "custom-property-empty-line-before": null,
-    "declaration-colon-space-before": "never",
     "scss/dollar-variable-empty-line-before": null,
     "keyframes-name-pattern": null,
     "max-nesting-depth": 5,
-    "max-empty-lines": 1,
-    "no-missing-end-of-source-newline": true,
-    "number-leading-zero": null,
-    "selector-attribute-operator-space-before": "never",
-    "selector-class-pattern": null,
-    "string-quotes": "double"
+    "selector-class-pattern": null
   }
 }

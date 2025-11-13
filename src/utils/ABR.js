@@ -39,7 +39,7 @@ export const DrmPublicProfile = ({abrProfile}) => {
   abrProfile.playout_formats = playoutFormats;
 
   return {
-    ok: playoutFormats === {} ? false : true,
+    ok: Object.keys(playoutFormats).length > 0,
     result: abrProfile
   };
 };
