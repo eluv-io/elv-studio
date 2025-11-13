@@ -15,7 +15,7 @@
     "lint-js-fix": "eslint ./src --fix --ext js,jsx --report-unused-disable-directives",
     "lint-scss": "npx stylelint \"src/**/*.{css,scss}\"",
     "lint-scss-fix": "npx stylelint \"src/**/*.{css,scss}\" --fix",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "dependencies": {
     "@eluvio/elv-abr-profile": "^1.0.2",
