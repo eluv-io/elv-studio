@@ -3,7 +3,7 @@ import {observer} from "mobx-react-lite";
 import {ingestStore} from "@/stores";
 import PageContainer from "@/components/page-container/PageContainer.jsx";
 import {DataTable} from "mantine-datatable";
-import {useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router";
 import {Box, Button, Group, Title} from "@mantine/core";
 
 import styles from "./Jobs.module.css";
