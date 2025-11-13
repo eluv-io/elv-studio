@@ -1,7 +1,7 @@
 import {observer} from "mobx-react-lite";
 import {Accordion} from "@mantine/core";
 import {useState} from "react";
-import PlusIcon from "@/assets/icons/PlusIcon.jsx";
+import PlusIcon from "@/assets/icons/PlusIcon.tsx";
 
 const AdvancedSection = observer(({
   children

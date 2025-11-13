@@ -1,10 +1,10 @@
 import {BrowserRouter} from "react-router";
 import {observer} from "mobx-react-lite";
-import AppRoutes from "./Routes.jsx";
+import AppRoutes from "./Routes.js";
 
-import SideNavigation from "@/components/side-navigation/SideNavigation.jsx";
-import ConfirmModal from "@/components/confirm-modal/ConfirmModal.jsx";
-import JobsWrapper from "@/pages/jobs/wrapper/JobsWrapper.jsx";
+import SideNavigation from "@/components/side-navigation/SideNavigation.tsx";
+import ConfirmModal from "@/components/confirm-modal/ConfirmModal.tsx";
+import JobsWrapper from "@/pages/jobs/wrapper/JobsWrapper.tsx";
 import {ingestStore, rootStore, uiStore} from "@/stores/index.js";
 import MantineTheme from "@/assets/MantineTheme.js";
 

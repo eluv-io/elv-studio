@@ -1,7 +1,7 @@
 import {ActionIcon, Box, Flex, Text, Title, Tooltip} from "@mantine/core";
-import {CopyIcon} from "@/assets/icons/index.jsx";
+import {CopyIcon} from "@/assets/icons/index.tsx";
 import {useClipboard} from "@mantine/hooks";
-import LinkIcon from "@/assets/icons/LinkIcon.jsx";
+import LinkIcon from "@/assets/icons/LinkIcon.tsx";
 
 const Action = ({label, onClick, Icon, href}) => {
   const actionProps = {};

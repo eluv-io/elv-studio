@@ -2,8 +2,8 @@ import {observer} from "mobx-react-lite";
 import {ingestStore} from "@/stores/index.js";
 import PrettyBytes from "pretty-bytes";
 import {Box, Divider} from "@mantine/core";
-import DetailRow from "@/pages/job-details/common/DetailsCommon.jsx";
-import SectionTitle from "@/components/section-title/SectionTitle.jsx";
+import DetailRow from "@/pages/job-details/common/DetailsCommon.tsx";
+import SectionTitle from "@/components/section-title/SectionTitle.tsx";
 
 const DetailsInfo = observer(({jobId}) => {
   const separateMasterMez = ingestStore.jobs[jobId].formData?.mez.newObject;

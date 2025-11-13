@@ -1,7 +1,7 @@
 import {AppShell, NavLink} from "@mantine/core";
 import {useLocation, useNavigate} from "react-router";
 import styles from "./SideNavigation.module.css";
-import {CubePlusIcon, JobsIcon} from "@/assets/icons/index.jsx";
+import {CubePlusIcon, JobsIcon} from "@/assets/icons/index.tsx";
 
 const NAV_LINKS = [
   {path: "/new", icon: <CubePlusIcon />, label: "Create"},

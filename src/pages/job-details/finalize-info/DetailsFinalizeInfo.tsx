@@ -1,8 +1,8 @@
 import {observer} from "mobx-react-lite";
 import {ingestStore} from "@/stores/index.js";
 import {Divider} from "@mantine/core";
-import DetailRow from "@/pages/job-details/common/DetailsCommon.jsx";
-import SectionTitle from "@/components/section-title/SectionTitle.jsx";
+import DetailRow from "@/pages/job-details/common/DetailsCommon.tsx";
+import SectionTitle from "@/components/section-title/SectionTitle.tsx";
 import {rootStore} from "@/stores/index.js";
 
 const DetailsFinalizeInfo = observer(({jobId}) => {

@@ -1,6 +1,6 @@
 import {ActionIcon, Anchor, Button, Flex, Text, Tooltip} from "@mantine/core";
 import {CopyToClipboard} from "@/utils/helpers.js";
-import {CopyIcon} from "@/assets/icons/index.jsx";
+import {CopyIcon} from "@/assets/icons/index.tsx";
 import {useState} from "react";
 import {observer} from "mobx-react-lite";
 import styles from "./JobDetailsCard.module.css";

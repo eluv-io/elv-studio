@@ -4,7 +4,7 @@ import {observer} from "mobx-react-lite";
 
 import {ingestStore} from "@/stores";
 import {ExclamationCircleIcon} from "@/assets/icons";
-import JSONView from "@/components/common/json-view/JSONView.jsx";
+import JSONView from "@/components/common/json-view/JSONView.tsx";
 import {
   Alert,
   Box,
@@ -15,10 +15,10 @@ import {
   Text
 } from "@mantine/core";
 import styles from "./JobDetails.module.css";
-import PageContainer from "@/components/page-container/PageContainer.jsx";
-import DetailsProgress from "@/pages/job-details/progress/DetailsProgress.jsx";
-import DetailsInfo from "@/pages/job-details/info/DetailsInfo.jsx";
-import DetailsFinalizeInfo from "@/pages/job-details/finalize-info/DetailsFinalizeInfo.jsx";
+import PageContainer from "@/components/page-container/PageContainer.tsx";
+import DetailsProgress from "@/pages/job-details/progress/DetailsProgress.tsx";
+import DetailsInfo from "@/pages/job-details/info/DetailsInfo.tsx";
+import DetailsFinalizeInfo from "@/pages/job-details/finalize-info/DetailsFinalizeInfo.tsx";
 
 const ErrorNotification = observer(({jobId, setShowErrorDialog}) => {
   if(!ingestStore.jobs[jobId].error) { return null; }

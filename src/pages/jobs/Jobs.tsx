@@ -1,14 +1,14 @@
 import {useState} from "react";
 import {observer} from "mobx-react-lite";
 import {ingestStore} from "@/stores";
-import PageContainer from "@/components/page-container/PageContainer.jsx";
+import PageContainer from "@/components/page-container/PageContainer.tsx";
 import {DataTable} from "mantine-datatable";
 import {useNavigate} from "react-router";
 import {Box, Button, Group, Title} from "@mantine/core";
 
 import styles from "./Jobs.module.css";
-import ConfirmModal from "@/components/confirm-modal/ConfirmModal.jsx";
-import CopyButton from "@/components/common/copy-button/CopyButton.jsx";
+import ConfirmModal from "@/components/confirm-modal/ConfirmModal.tsx";
+import CopyButton from "@/components/common/copy-button/CopyButton.tsx";
 import {SortTable} from "@/utils/helpers.js";
 
 const Jobs = observer(() => {

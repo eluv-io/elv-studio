@@ -4,6 +4,8 @@ const {
 } = require("@eslint/compat");
 
 const babelParser = require("@babel/eslint-parser");
+const tsParser = require("@typescript-eslint/parser");
+const tsPlugin = require("@typescript-eslint/eslint-plugin");
 const reactRefresh = require("eslint-plugin-react-refresh");
 const js = require("@eslint/js");
 
@@ -62,6 +64,31 @@ module.exports = [
             }],
             "no-console": ["error"],
             "quotes": ["error", "double"],
+        },
+    },
+    {
+        files: ["**/*.ts", "**/*.tsx"],
+        languageOptions: {
+            parser: tsParser,
+            parserOptions: {
+                ecmaVersion: "latest",
+                sourceType: "module",
+                project: "./tsconfig.json",
+            },
+        },
+        plugins: {
+            "@typescript-eslint": tsPlugin,
+        },
+        rules: {
+            "react-hooks/exhaustive-deps": 0,
+            "react/prop-types": 0,
+            "semi": ["error", "always"],
+            "react-refresh/only-export-components": ["warn", {
+                allowConstantExport: true,
+            }],
+            "no-console": ["error"],
+            "quotes": ["error", "double"],
+            "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
         },
     },
 ];

@@ -1,6 +1,6 @@
 import {ActionIcon, Box, Code, Tooltip} from "@mantine/core";
 import {CopyToClipboard} from "@/utils/helpers.js";
-import {CopyIcon} from "@/assets/icons/index.jsx";
+import {CopyIcon} from "@/assets/icons/index.tsx";
 import {useState} from "react";
 import styles from "./JSONView.module.css";
 

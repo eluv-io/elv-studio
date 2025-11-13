@@ -1,9 +1,9 @@
 import {observer} from "mobx-react-lite";
 import {Box, Loader, SimpleGrid, Text} from "@mantine/core";
-import SectionTitle from "@/components/section-title/SectionTitle.jsx";
-import TextCard from "@/components/text-card/TextCard.jsx";
+import SectionTitle from "@/components/section-title/SectionTitle.tsx";
+import TextCard from "@/components/text-card/TextCard.tsx";
 import {ingestStore} from "@/stores/index.js";
-import {CheckmarkIcon} from "@/assets/icons/index.jsx";
+import {CheckmarkIcon} from "@/assets/icons/index.tsx";
 import styles from "./DetailsProgress.module.css";
 
 const DetailsProgress = observer(({jobId}) => {

@@ -8,8 +8,8 @@ import {s3Regions} from "@/utils";
 import {abrProfileClear, abrProfileBoth} from "@/utils/ABR";
 import {CircleInfoIcon, CloseIcon, ExclamationCircleIcon, UploadIcon} from "@/assets/icons";
 
-import PageContainer from "@/components/page-container/PageContainer.jsx";
-import FabricLoader from "@/components/FabricLoader";
+import PageContainer from "@/components/page-container/PageContainer.tsx";
+import FabricLoader from "@/components/FabricLoader.js";
 import styles from "./Create.module.css";
 
 import {
@@ -32,7 +32,7 @@ import {
   Title,
   JsonInput
 } from "@mantine/core";
-import SectionTitle from "@/components/section-title/SectionTitle.jsx";
+import SectionTitle from "@/components/section-title/SectionTitle.tsx";
 import {Dropzone} from "@mantine/dropzone";
 
 const HandleRemove = ({index, files, SetFilesCallback}) => {
