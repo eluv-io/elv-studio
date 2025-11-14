@@ -26,4 +26,8 @@ export const s3Regions = [
   {name: "US East (N. Virginia)", value: "us-east-1"},
   {name: "US West (N. California)", value: "us-west-1"},
   {name: "US West (Oregon)", value: "us-west-2"}
-];
+] as const;  // ← Add 'as const' for literal types
+
+// Extract types from the constant
+export type S3Region = typeof s3Regions[number];
+export type S3RegionValue = typeof s3Regions[number]["value"];

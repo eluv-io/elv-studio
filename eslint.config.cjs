@@ -88,7 +88,14 @@ module.exports = [
             }],
             "no-console": ["error"],
             "quotes": ["error", "double"],
-            "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+            // Disable base rule for TypeScript files
+            "no-unused-vars": "off",
+            // Use TypeScript-specific rule with better options
+            "@typescript-eslint/no-unused-vars": ["error", {
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_",
+                "args": "after-used"  // Allow unused params in function signatures
+            }],
         },
     },
 ];

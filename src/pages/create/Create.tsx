@@ -34,8 +34,15 @@ import {
 } from "@mantine/core";
 import SectionTitle from "@/components/section-title/SectionTitle.tsx";
 import {Dropzone} from "@mantine/dropzone";
+import {Permission, S3RegionName} from "@/types/eluvio.ts";
 
-const HandleRemove = ({index, files, SetFilesCallback}) => {
+interface HandleRemoveProps {
+  index: number;
+  files: File[];
+  SetFilesCallback: (files: File[]) => void;
+}
+
+const HandleRemove = ({index, files, SetFilesCallback}: HandleRemoveProps) => {
   const newFiles = files
     .slice(0, index)
     .concat(files.slice(index + 1));
@@ -45,23 +52,20 @@ const HandleRemove = ({index, files, SetFilesCallback}) => {
   }
 };
 
-const Permissions = ({permission, setPermission}) => {
+interface PermissionsProps {
+  permission: Permission;
+  setPermission: (value: Permission | null) => void;
+}
+
+const Permissions = ({permission, setPermission}: PermissionsProps) => {
   const permissionLevels = rootStore.client.permissionLevels;
 
   return (
     <Select
       label="Permission"
       description="Content object permission level."
-      tooltip={
-        Object.values(rootStore.client.permissionLevels).map(({short, description}) =>
-          <div key={`permission-info-${short}`} className="form__permission-tooltip-item">
-            <div className="form__permission-tooltip-title">{ short }:</div>
-            <div>{ description }</div>
-          </div>
-        )
-      }
       value={permission}
-      onChange={value => setPermission(value)}
+      onChange={(value) => setPermission(value as Permission | null)}
       data={
         Object.keys(permissionLevels || []).map(permissionName => (
           {
@@ -74,6 +78,15 @@ const Permissions = ({permission, setPermission}) => {
   );
 };
 
+interface S3AccessProps {
+  s3UseAKSecret: boolean;
+  s3Url: string;
+  s3AccessKey: string;
+  s3Secret: string;
+  s3PresignedUrl: string;
+  s3Region: S3RegionName
+}
+
 const S3Access = ({
   s3UseAKSecret,
   s3Url,
@@ -81,12 +94,12 @@ const S3Access = ({
   s3Secret,
   s3PresignedUrl,
   s3Region
-}) => {
+}: S3AccessProps) => {
   let cloudCredentials;
   let bucket;
   if(s3UseAKSecret && s3Url) {
     const s3PrefixRegex = /^s3:\/\/([^/]+)\//i; // for matching and extracting bucket name when full s3:// path is specified
-    const s3PrefixMatch = (s3PrefixRegex.exec(s3Url));
+    const s3PrefixMatch = (s3PrefixRegex.exec(s3Url)) || [];
 
     bucket = s3PrefixMatch[1];
     cloudCredentials = {
@@ -95,7 +108,7 @@ const S3Access = ({
     };
   } else if(s3PresignedUrl) {
     const httpsPrefixRegex = /^https:\/\/([^/]+)\//i;
-    const httpsPrefixMatch = (httpsPrefixRegex.exec(s3PresignedUrl));
+    const httpsPrefixMatch = (httpsPrefixRegex.exec(s3PresignedUrl)) || [];
     bucket = httpsPrefixMatch[1].split(".")[0];
 
     cloudCredentials = {

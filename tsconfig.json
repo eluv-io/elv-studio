@@ -23,13 +23,14 @@
     /* Path Aliases - sync with vite.config.js */
     "baseUrl": ".",
     "paths": {
-      "@/assets/*": ["./src/assets/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/pages/*": ["./src/pages/*"],
-      "@/stores": ["./src/stores/index"],
-      "@/stores/*": ["./src/stores/*"],
-      "@/utils": ["./src/utils/index"],
-      "@/utils/*": ["./src/utils/*"]
+      "@/*": ["./src/*"]
+//      "@/assets/*": ["./src/assets/*"],
+//      "@/components/*": ["./src/components/*"],
+//      "@/pages/*": ["./src/pages/*"],
+//      "@/stores": ["./src/stores/index"],
+//      "@/stores/*": ["./src/stores/*"],
+//      "@/utils": ["./src/utils/index"],
+//      "@/utils/*": ["./src/utils/*"]
     }
   },
   "include": ["src"],
