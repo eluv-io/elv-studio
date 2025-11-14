@@ -53,7 +53,7 @@ interface SortStatus {
 
 interface SortTableParams {
   sortStatus: SortStatus;
-  // eslint-disable-next-line no-unused-vars
+   
   AdditionalCondition?: (a: any, b: any) => number | undefined;
 }
 

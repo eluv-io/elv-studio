@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+ 
 // Type declarations for stores (JavaScript files)
 
 export interface RootStore {
