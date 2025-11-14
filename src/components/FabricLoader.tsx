@@ -1,22 +1,30 @@
-import {useEffect} from "react";
+import {ReactNode, useEffect} from "react";
 import {observer} from "mobx-react-lite";
 import {ingestStore} from "@/stores";
 import {Loader} from "@mantine/core";
+import {LogError} from "@/utils/errors";
 
-const FabricLoader = observer(({children}) => {
-  const LoadDependencies = async () => {
-    await ingestStore.LoadDependencies();
-  };
+interface FabricLoaderProps {
+  children: ReactNode;
+}
 
+const FabricLoader = observer(({children}: FabricLoaderProps) => {
   useEffect(() => {
-    LoadDependencies();
+    const LoadDependencies = async () => {
+      await ingestStore.LoadDependencies();
+    };
+
+    LoadDependencies().catch((error) => {
+      LogError("Failed to load dependencies", error);
+    });
   }, []);
 
   if(!ingestStore.loaded) {
     return <Loader />;
-  } else {
-    return children;
   }
+
+  return children;
 });
 
 export default FabricLoader;
+
