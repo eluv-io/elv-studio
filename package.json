@@ -18,7 +18,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@eluvio/elv-abr-profile": "^1.0.2",
+    "@eluvio/elv-abr-profile": "^1.0.4",
     "@eluvio/elv-client-js": "^4.2.13",
     "@eluvio/elv-lro-status": "^3.0.8",
     "@mantine/core": "^8.3.7",
