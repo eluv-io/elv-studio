@@ -1,29 +1,37 @@
-import {createTheme, rem} from "@mantine/core";
+import {
+  ButtonProps,
+  createTheme,
+  MantineTheme,
+  MantineThemeOverride,
+  NavLinkProps,
+  rem,
+  TableProps
+} from "@mantine/core";
 
-const theme = createTheme({
+const theme: MantineThemeOverride = createTheme({
   fontFamily: "Inter, Helvetica Neue, helvetica, sans-serif",
   headings: {
     fontFamily: "Inter, Helvetica Neue, helvetica, sans-serif",
     sizes: {
       h1: {
         fontSize: rem(22),
-        fontWeight: 600
+        fontWeight: "600"
       },
       h2: {
         fontSize: rem(18),
-        fontWeight: 600
+        fontWeight: "600"
       },
       h3: {
         fontSize: rem(14),
-        fontWeight: 700
+        fontWeight: "700"
       },
       h4: {
         fontSize: rem(14),
-        fontWeight: 500
+        fontWeight: "500"
       },
       h6: {
         fontSize: rem(12),
-        fontWeight: 500
+        fontWeight: "500"
       }
     }
   },
@@ -71,7 +79,13 @@ const theme = createTheme({
       "#22252a", // eluvio color
       "#202020", // eluvio color
       "#1e1e1e", // eluvio color
-      "#212529" // eluvio color
+      "#212529", // eluvio color
+      "#212529",
+      "#212529",
+      "#212529",
+      "#212529",
+      "#212529",
+      "#212529",
     ],
     "elv-neutral": [
       "#eeeeee", // eluvio color
@@ -131,7 +145,7 @@ const theme = createTheme({
       defaultProps: {
         variant: "filled"
       },
-      styles: (theme, params) => ({
+      styles: (_: MantineTheme, params: ButtonProps) => ({
         root: {
           "minWidth": "7rem",
           "--button-radius": rem(5),
@@ -191,7 +205,7 @@ const theme = createTheme({
       })
     },
     NavLink: {
-      styles: (theme, params) => ({
+      styles: (_: MantineTheme, params: NavLinkProps) => ({
         root: {
           ...(params.active && {
             "backgroundColor": "var(--mantine-color-elv-blue-1)"
@@ -233,7 +247,7 @@ const theme = createTheme({
       })
     },
     Table: {
-      vars: (theme, props) => {
+      vars: (_: MantineTheme, props: TableProps & { size?: string }) => {
         if(props.size === "xxs") {
           return {
             root: {
