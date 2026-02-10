@@ -2,7 +2,7 @@ import {useState} from "react";
 import {observer} from "mobx-react-lite";
 import {ingestStore} from "@/stores";
 import PageContainer from "@/components/page-container/PageContainer.tsx";
-import {DataTable} from "mantine-datatable";
+import {DataTable, DataTableSortStatus} from "mantine-datatable";
 import {useNavigate} from "react-router";
 import {Box, Button, Group, Title} from "@mantine/core";
 
@@ -14,10 +14,18 @@ import {SortTable} from "@/utils/helpers";
 const Jobs = observer(() => {
   const [showClearJobsDialog, setShowClearJobsDialog] = useState(false);
   const navigate = useNavigate();
-  const [sortStatus, setSortStatus] = useState({
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus<typeof records[number]>>({
     columnAccessor: "_title",
-    direction: "asc"
+    direction: "asc" as const
   });
+
+  interface JobStatusProps {
+    currentStep: "upload" | "ingest" | "finalize";
+    uploadPercentage: number;
+    estimatedTimeLeft: string;
+    runState: string;
+    error: string;
+  }
 
   const JobStatus = ({
     currentStep,
@@ -25,7 +33,7 @@ const Jobs = observer(() => {
     estimatedTimeLeft,
     runState,
     error
-  }) => {
+  }: JobStatusProps) => {
     const statusMap = {
       "upload": "Uploading",
       "ingest": "Ingesting",

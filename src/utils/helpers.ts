@@ -47,20 +47,22 @@ export const CopyToClipboard = ({text}: CopyToClipboardParams) => {
 };
 
 interface SortStatus {
-  columnAccessor: string;
+  columnAccessor: PropertyKey;
   direction: "asc" | "desc";
 }
 
 interface SortTableParams {
   sortStatus: SortStatus;
-   
   AdditionalCondition?: (a: any, b: any) => number | undefined;
 }
 
 export const SortTable = ({sortStatus, AdditionalCondition}: SortTableParams) => {
   return (a: any, b: any) => {
-    if(AdditionalCondition && typeof AdditionalCondition(a, b) !== "undefined") {
-      return AdditionalCondition(a, b);
+    if(AdditionalCondition) {
+      const result = AdditionalCondition(a, b);
+      if(typeof result !== "undefined") {
+        return result;
+      }
     }
 
     a = a[sortStatus.columnAccessor]?.trim();

@@ -6,7 +6,7 @@ interface CopyButtonProps {
   value: string;
   copyText?: string;
   copiedText?: string;
-  position: TooltipProps["position"];
+  position?: TooltipProps["position"];
 }
 
 const CopyButton = (({
