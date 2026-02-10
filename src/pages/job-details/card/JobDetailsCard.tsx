@@ -5,7 +5,7 @@ import {useState} from "react";
 import {observer} from "mobx-react-lite";
 import styles from "./JobDetailsCard.module.css";
 
-const ActionText = ({value, onClick}) => {
+const ActionText = ({value, onClick}: {value: string; onClick: Function}) => {
   return (
     <Flex maw="100%">
       <Button
@@ -19,7 +19,7 @@ const ActionText = ({value, onClick}) => {
   );
 };
 
-const LinkText = ({value}) => {
+const LinkText = ({value}: {value: string}) => {
   return (
     <Flex maw="100%">
       <Anchor href={value} target="_blank" classNames={{root: styles.link}} w="100%">
@@ -29,7 +29,7 @@ const LinkText = ({value}) => {
   );
 };
 
-const CopyText = ({value}) => {
+const CopyText = ({value}: {value: string}) => {
   const [copied, setCopied] = useState(false);
 
   return (
@@ -46,7 +46,7 @@ const CopyText = ({value}) => {
 
             setTimeout(() => {
               setCopied(false);
-            }, [3000]);
+            }, 3000);
           }}
         >
           <CopyIcon color="var(--mantine-color-elv-neutral-5)" />
@@ -56,11 +56,19 @@ const CopyText = ({value}) => {
   );
 };
 
-const PlainText = ({value}) => {
+const PlainText = ({value}: {value: string}) => {
   return (
     <Text>{ value }</Text>
   );
 };
+
+interface JobDetailsCardProps {
+  label: string;
+  value: string;
+  secondary: boolean;
+  type: "TEXT" | "LINK" | "ACTION" | "COPY";
+  onClick: Function;
+}
 
 const JobDetailsCard = observer(({
   label,
@@ -68,7 +76,7 @@ const JobDetailsCard = observer(({
   secondary = false,
   type,
   onClick
-}) => {
+}: JobDetailsCardProps) => {
   const TYPE_MAP = {
     "TEXT": <PlainText value={value} />,
     "LINK": <LinkText value={value} />,

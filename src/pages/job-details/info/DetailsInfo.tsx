@@ -5,12 +5,21 @@ import {Box, Divider} from "@mantine/core";
 import DetailRow from "@/pages/job-details/common/DetailsCommon.tsx";
 import SectionTitle from "@/components/section-title/SectionTitle.tsx";
 
-const DetailsInfo = observer(({jobId}) => {
+interface InfoItem {
+  label: string;
+  id: string;
+  value: string;
+  indent?: boolean;
+  copyable?: boolean;
+  hidden?: boolean;
+}
+
+const DetailsInfo = observer(({jobId}: {jobId: string}) => {
   const separateMasterMez = ingestStore.jobs[jobId].formData?.mez.newObject;
 
   const idPrefix = separateMasterMez ? "master" : "master-mez";
 
-  const masterValues = [
+  const masterValues: InfoItem[] = [
     {
       label: separateMasterMez ? "Master" : "Master + Mezzanine",
       id: `${idPrefix}-header`,
@@ -43,7 +52,7 @@ const DetailsInfo = observer(({jobId}) => {
     }
   ];
 
-  const mezValues = [
+  const mezValues: InfoItem[] = [
     {
       label: "Mezzanine",
       id: "mez-header",
@@ -77,7 +86,7 @@ const DetailsInfo = observer(({jobId}) => {
     }
   ];
 
-  let infoValues = [
+  let infoValues: InfoItem[] = [
     {
       label: "Total File Size",
       id: "object-total-size",

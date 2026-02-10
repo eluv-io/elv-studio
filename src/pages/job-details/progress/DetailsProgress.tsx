@@ -6,7 +6,7 @@ import {ingestStore} from "@/stores/index.js";
 import {CheckmarkIcon} from "@/assets/icons/index.tsx";
 import styles from "./DetailsProgress.module.css";
 
-const DetailsProgress = observer(({jobId}) => {
+const DetailsProgress = observer(({jobId}: {jobId: string}) => {
   return (
     <Box mb={19} w="100%">
       <SectionTitle mb={19}>Progress</SectionTitle>
@@ -15,7 +15,7 @@ const DetailsProgress = observer(({jobId}) => {
         <TextCard
           title="Upload"
           message={
-            ["finished", "failed"].includes(ingestStore.jobs[jobId].upload.runState) ? null : `... ${ingestStore.jobs[jobId].upload.percentage || 0}%`
+            ["finished", "failed"].includes(ingestStore.jobs[jobId].upload.runState) ? undefined : `... ${ingestStore.jobs[jobId].upload.percentage || 0}%`
           }
           rightSection={
             ingestStore.jobs[jobId].upload.runState === "failed" ?

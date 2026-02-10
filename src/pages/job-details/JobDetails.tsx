@@ -20,7 +20,13 @@ import DetailsProgress from "@/pages/job-details/progress/DetailsProgress.tsx";
 import DetailsInfo from "@/pages/job-details/info/DetailsInfo.tsx";
 import DetailsFinalizeInfo from "@/pages/job-details/finalize-info/DetailsFinalizeInfo.tsx";
 
-const ErrorNotification = observer(({jobId, setShowErrorDialog}) => {
+interface ErrorItem {
+  jobId: string;
+  showErrorDialog?: boolean;
+  setShowErrorDialog: (value: boolean) => void;
+}
+
+const ErrorNotification = observer(({jobId, setShowErrorDialog}: ErrorItem) => {
   if(!ingestStore.jobs[jobId].error) { return null; }
 
   const fallbackErrorMessage = "Unable to create media playable object.";
@@ -53,7 +59,7 @@ const ErrorNotification = observer(({jobId, setShowErrorDialog}) => {
   );
 });
 
-const ErrorDialog = observer(({jobId, showErrorDialog, setShowErrorDialog}) => {
+const ErrorDialog = observer(({jobId, showErrorDialog, setShowErrorDialog}: ErrorItem) => {
   if(!showErrorDialog) { return null; }
 
   return (
@@ -61,7 +67,6 @@ const ErrorDialog = observer(({jobId, showErrorDialog, setShowErrorDialog}) => {
       opened={showErrorDialog}
       onClose={() => setShowErrorDialog(false)}
       title={`Error Log for ${ingestStore.jobs[jobId].formData?.master.title || jobId}`}
-      hideCancelButton={true}
       size="lg"
       padding="24px"
       radius="6px"
@@ -144,7 +149,7 @@ const JobDetails = observer(() => {
     });
   };
 
-  if(!ingestStore.job) { return <Loader />; }
+  if(!ingestStore.job || !jobId) { return <Loader />; }
 
   return (
     <PageContainer

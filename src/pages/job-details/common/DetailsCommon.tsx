@@ -1,17 +1,34 @@
-import {ActionIcon, Box, Flex, Text, Title, Tooltip} from "@mantine/core";
+import {ActionIcon, Box, BoxProps, Flex, Text, Title, Tooltip} from "@mantine/core";
 import {CopyIcon} from "@/assets/icons/index.tsx";
 import {useClipboard} from "@mantine/hooks";
 import LinkIcon from "@/assets/icons/LinkIcon.tsx";
+import {ReactNode} from "react";
 
-const Action = ({label, onClick, Icon, href}) => {
-  const actionProps = {};
+interface ActionButtonProps {
+  label: string;
+  onClick?: () => void;
+  Icon: ReactNode;
+  href?: string;
+}
+
+const Action = ({label, onClick, Icon, href}: ActionButtonProps) => {
+  let actionProps: {
+    component?: "a";
+    href?: string;
+    target?: string;
+    onClick?: () => void;
+  };
 
   if(href) {
-    actionProps.component = "a";
-    actionProps.href = href;
-    actionProps.target = "_blank";
+    actionProps = {
+      component: "a",
+      href,
+      target: "_blank"
+    };
   } else {
-    actionProps.onClick = onClick;
+    actionProps = {
+      onClick
+    };
   }
 
   return (
@@ -32,6 +49,18 @@ const Action = ({label, onClick, Icon, href}) => {
   );
 };
 
+interface DetailRowProps {
+  indent?: boolean;
+  label: string;
+  value: string;
+  copyable?: boolean;
+  onClick?: () => void;
+  clickTitle?: string;
+  href?: string;
+  Icon?: ReactNode;
+  mb?: BoxProps["mb"]
+}
+
 export const DetailRow = ({
   indent=false,
   label,
@@ -42,12 +71,12 @@ export const DetailRow = ({
   href,
   Icon,
   mb=5
-}) => {
+}: DetailRowProps) => {
   const clipboard = useClipboard();
 
   const HandleClick = copyable ?
     () => clipboard.copy(value) :
-    () => onClick();
+    (onClick ? () => onClick() : undefined);
 
   const actionLabel = copyable ?
     (
@@ -72,7 +101,6 @@ export const DetailRow = ({
           order={3}
           c="elv-gray.9"
           pr="0.5rem"
-          wrap="no-wrap"
           style={{whiteSpace: "nowrap"}}
         >
           { `${label}:` }

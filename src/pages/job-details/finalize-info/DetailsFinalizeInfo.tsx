@@ -5,10 +5,10 @@ import DetailRow from "@/pages/job-details/common/DetailsCommon.tsx";
 import SectionTitle from "@/components/section-title/SectionTitle.tsx";
 import {rootStore} from "@/stores/index.js";
 
-const DetailsFinalizeInfo = observer(({jobId}) => {
+const DetailsFinalizeInfo = observer(({jobId}: {jobId: string}) => {
   if(!ingestStore.jobs[jobId].finalize.mezzanineHash) { return null; }
 
-  const OpenObjectLink = ({libraryId, objectId}) => {
+  const OpenObjectLink = ({libraryId, objectId}: {libraryId: string; objectId: string}) => {
     rootStore.client.SendMessage({
       options: {
         operation: "OpenLink",

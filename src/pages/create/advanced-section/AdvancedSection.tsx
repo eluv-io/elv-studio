@@ -1,11 +1,15 @@
 import {observer} from "mobx-react-lite";
 import {Accordion} from "@mantine/core";
-import {useState} from "react";
+import {ReactNode, useState} from "react";
 import PlusIcon from "@/assets/icons/PlusIcon.tsx";
+
+interface AdvancedSectionProps {
+  children: ReactNode;
+}
 
 const AdvancedSection = observer(({
   children
-}) => {
+}: AdvancedSectionProps) => {
   const [value, setValue] = useState("");
 
   return (
@@ -14,7 +18,7 @@ const AdvancedSection = observer(({
       id="advanced-section"
       multiple={false}
       value={value}
-      onChange={setValue}
+      onChange={() => setValue}
       chevron={<PlusIcon />}
     >
       <Accordion.Item value="advanced-item">

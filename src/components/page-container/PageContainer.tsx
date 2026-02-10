@@ -107,8 +107,8 @@ interface PageContainerProps {
   centerTitle?: boolean;
   width?: BoxProps["w"];
   mb?: BoxProps["mb"];
-  error: AlertMessageProps["error"];
-  actions: TopActionsProps["actions"];
+  error?: AlertMessageProps["error"];
+  actions?: TopActionsProps["actions"];
 }
 
 const PageContainer = ({
@@ -124,8 +124,14 @@ const PageContainer = ({
   return (
     <Box w={width}>
       <Box p="24 46 46">
-        <AlertMessage error={error} />
-        <TopActions actions={actions} />
+        {
+          error &&
+          <AlertMessage error={error} />
+        }
+        {
+          actions &&
+          <TopActions actions={actions} />
+        }
         <TitleSection title={title} leftSection={titleLeftSection} centerTitle={centerTitle} mb={mb} />
         { children }
       </Box>
