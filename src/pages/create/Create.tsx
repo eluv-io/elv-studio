@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {FormEvent, useEffect, useState} from "react";
 import {Navigate} from "react-router";
 import {observer} from "mobx-react-lite";
 import PrettyBytes from "pretty-bytes";
@@ -33,7 +33,7 @@ import {
   JsonInput
 } from "@mantine/core";
 import SectionTitle from "@/components/section-title/SectionTitle.tsx";
-import {Dropzone} from "@mantine/dropzone";
+import {Dropzone, FileWithPath} from "@mantine/dropzone";
 import {Permission, S3RegionName} from "@/types/eluvio.ts";
 
 interface HandleRemoveProps {
@@ -53,7 +53,7 @@ const HandleRemove = ({index, files, SetFilesCallback}: HandleRemoveProps) => {
 };
 
 interface PermissionsProps {
-  permission: Permission;
+  permission: Permission | null;
   setPermission: (value: Permission | null) => void;
 }
 
@@ -84,7 +84,13 @@ interface S3AccessProps {
   s3AccessKey: string;
   s3Secret: string;
   s3PresignedUrl: string;
-  s3Region: S3RegionName
+  s3Region: S3RegionName | ""
+}
+
+interface CloudCredential {
+  access_key_id?: string;
+  secret_access_key?: string;
+  signed_url?: string;
 }
 
 const S3Access = ({
@@ -95,7 +101,7 @@ const S3Access = ({
   s3PresignedUrl,
   s3Region
 }: S3AccessProps) => {
-  let cloudCredentials;
+  let cloudCredentials: CloudCredential = {};
   let bucket;
   if(s3UseAKSecret && s3Url) {
     const s3PrefixRegex = /^s3:\/\/([^/]+)\//i; // for matching and extracting bucket name when full s3:// path is specified
@@ -130,26 +136,31 @@ const S3Access = ({
   }];
 };
 
+interface ExtendedFile extends FileWithPath {
+  errors?: readonly { code: string; message: string }[];
+  id?: string;
+}
+
 const Create = observer(() => {
   const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<{title: string; message: string}|undefined>(undefined);
 
   const [masterObjectId, setMasterObjectId] = useState("");
   const [uploadMethod, setUploadMethod] = useState("LOCAL");
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<ExtendedFile[]>([]);
 
-  const [abrProfile, setAbrProfile] = useState(null);
-  const [masterLibrary, setMasterLibrary] = useState("");
-  const [accessGroup, setAccessGroup] = useState("");
+  const [abrProfile, setAbrProfile] = useState<string|object|null>(null);
+  const [masterLibrary, setMasterLibrary] = useState<string|null>("");
+  const [accessGroup, setAccessGroup] = useState<string|null>("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [permission, setPermission] = useState("editable");
+  const [permission, setPermission] = useState<Permission|null>("editable");
 
-  const [mezLibrary, setMezLibrary] = useState("");
-  const [mezContentType, setMezContentType] = useState("");
+  const [mezLibrary, setMezLibrary] = useState<string|null>("");
+  const [mezContentType, setMezContentType] = useState<string|null>("");
 
   const [displayTitle, setDisplayTitle] = useState("");
-  const [playbackEncryption, setPlaybackEncryption] = useState("");
+  const [playbackEncryption, setPlaybackEncryption] = useState<string|null>("");
   const [useMasterAsMez, setUseMasterAsMez] = useState(true);
 
   const [hasDrmCert, setHasDrmCert] = useState(false);
@@ -159,7 +170,7 @@ const Create = observer(() => {
   const [disableClear, setDisableClear] = useState(true);
 
   const [s3Url, setS3Url] = useState("");
-  const [s3Region, setS3Region] = useState("");
+  const [s3Region, setS3Region] = useState<S3RegionName | "">("");
   const [s3AccessKey, setS3AccessKey] = useState("");
   const [s3Secret, setS3Secret] = useState("");
   const [s3Copy, setS3Copy] = useState(false);
@@ -167,8 +178,8 @@ const Create = observer(() => {
   const [s3UseAKSecret, setS3UseAKSecret] = useState(false);
 
   // Custom errors
-  const [s3UrlFieldError, setS3UrlFieldError] = useState(null);
-  const [nameFieldError, setNameFieldError] = useState(null);
+  const [s3UrlFieldError, setS3UrlFieldError] = useState<string | null>(null);
+  const [nameFieldError, setNameFieldError] = useState<string | null>(null);
 
   const ENCRYPTION_OPTIONS = [
     {id: "drm-public", value: "drm-public", label: "DRM - Public Access", disabled: disableDrmPublic, title: "Playout Formats: Dash Widevine, HLS Sample AES, HLS AES-128"},
@@ -251,12 +262,12 @@ const Create = observer(() => {
     }
   }, [playbackEncryption]);
 
-  const SetAbrProfile = ({profile, stringify=true}) => {
+  const SetAbrProfile = ({profile, stringify=true}: {profile: object; stringify: boolean}) => {
     const abr = stringify ? JSON.stringify(profile, null, 2) || "" : profile;
     setAbrProfile(abr);
   };
 
-  const SetMezContentType = async ({type}) => {
+  const SetMezContentType = async ({type}: {type: string}) => {
     let contentType;
 
     if(!type) {
@@ -276,7 +287,7 @@ const Create = observer(() => {
     libraryId,
     type,
     resetEncryption=true
-  }) => {
+  }: {libraryId: string | null; type: "MASTER" | "MEZ"; resetEncryption?: boolean}) => {
     const library = ingestStore.GetLibrary(libraryId);
     const libraryHasCert = !!library.drmCert;
     setHasDrmCert(libraryHasCert);
@@ -316,7 +327,7 @@ const Create = observer(() => {
   const ValidForm = () => {
     // Check for JSON validation errors first
     try {
-      if(playbackEncryption === "custom" && abrProfile) {
+      if(playbackEncryption === "custom" && abrProfile && typeof abrProfile === "string") {
         JSON.parse(abrProfile);
       }
     } catch {
@@ -360,25 +371,33 @@ const Create = observer(() => {
     return true;
   };
 
-  const ValidS3Url = ({value}) => {
+  const ValidS3Url = ({value}: {value: string}) => {
     return !value || value.startsWith("s3://");
   };
 
-  const ValidName = ({value}) => {
-    const trimmedValue = value.trim();
+  const ValidName = ({value}: {value?: string}) => {
+    const trimmedValue = value ? value.trim() : "";
 
-    if(value && trimmedValue.length < 3) {
-      return false;
-    } else {
-      return true;
-    }
+    return !(value && trimmedValue.length < 3);
   };
 
-  const HandleSubmit = async (event) => {
+  const HandleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsCreating(true);
 
-    let access = [];
+    let access: {
+      path_matchers: string[],
+      remote_access: {
+        protocol: string,
+        platform: string,
+        path: string,
+        storage_endpoint: {
+          region: S3RegionName | ""
+        },
+        cloud_credentials: CloudCredential
+      }
+    }[] = [];
+
     try {
       if(uploadMethod === "S3") {
         access = S3Access({
@@ -391,11 +410,13 @@ const Create = observer(() => {
         });
       }
 
-      let accessGroupAddress = ingestStore.accessGroups[accessGroup] ? ingestStore.accessGroups[accessGroup].address : undefined;
+      let accessGroupAddress = accessGroup ?
+        ingestStore.accessGroups[accessGroup] ? ingestStore.accessGroups[accessGroup].address : undefined :
+        "";
 
       let abrMetadata;
       let type;
-      if(playbackEncryption === "custom") {
+      if(playbackEncryption === "custom" && typeof abrProfile === "string") {
         abrMetadata = JSON.stringify({
           ...JSON.parse(abrProfile),
           mez_content_type: mezContentType
@@ -486,11 +507,8 @@ const Create = observer(() => {
                   id="main-dropzone"
                   onDrop={files => setFiles(files)}
                   onReject={fileRejections => {
-                    const fileObjects = fileRejections.map(item => (
-                      {
-                        ...item.file,
-                        errors: item.errors
-                      }
+                    const fileObjects: ExtendedFile[] = fileRejections.map(item => (
+                      Object.assign(item.file, {errors: item.errors})
                     ));
                     setFiles(fileObjects);
                   }}
@@ -615,7 +633,7 @@ const Create = observer(() => {
                   }
                   placeholder="Select Region"
                   description="Select the AWS region where your S3 bucket is hosted."
-                  onChange={value => setS3Region(value)}
+                  onChange={(value) => setS3Region((value || "") as S3RegionName | "")}
                   required={s3UseAKSecret}
                 />
               </SimpleGrid>
@@ -863,10 +881,10 @@ const Create = observer(() => {
             <JsonInput
               name="abrProfile"
               label="ABR Profile Metadata"
-              value={abrProfile}
+              value={typeof abrProfile === "string" ? abrProfile : JSON.stringify(abrProfile, null, 2)}
               onChange={value => setAbrProfile(value)}
               required={playbackEncryption === "custom"}
-              defaultValue={{default_profile: {}}}
+              defaultValue={JSON.stringify({default_profile: {}}, null, 2)}
               validationError="Invalid JSON"
               autosize
               minRows={6}
