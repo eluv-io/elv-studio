@@ -47,12 +47,12 @@ interface CreateABRMezzanineProps {
 }
 
 class IngestStore {
-  libraries?: {[libraryId: string]: Library};
+  libraries: {[libraryId: string]: Library} = {};
   accessGroups: {[accessGroupId: string]: AccessGroup} = {};
   loaded = false;
   jobs: {[jobId: string]: Job} = {};
   job?: Job;
-  contentTypes?: {[contentTypeId: string]: {name: string}};
+  contentTypes: {[contentTypeId: string]: {name: string}} = {};
   showDialog = false;
   dialog = {
     title: "",
@@ -71,8 +71,8 @@ class IngestStore {
     return this.rootStore.client;
   }
 
-  GetLibrary = (libraryId?: string) => {
-    if(!this.libraries) { return null; }
+  GetLibrary = (libraryId?: string | null) => {
+    if(!this.libraries || !libraryId) { return null; }
 
     return libraryId ? this.libraries[libraryId] : null;
   };
@@ -236,8 +236,8 @@ class IngestStore {
     throw error;
   };
 
-  *ContentType({name, typeId, versionHash}: {name: string; typeId: string; versionHash: string}): Generator<void, Promise<object>, any> {
-    return yield this.client.ContentType({name, typeId, versionHash});
+  async ContentType({name, typeId, versionHash}: {name?: string; typeId?: string; versionHash?: string}) {
+    return this.client.ContentType({name, typeId, versionHash});
   };
 
   *LoadDependencies() {

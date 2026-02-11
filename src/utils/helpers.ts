@@ -46,6 +46,15 @@ export const CopyToClipboard = ({text}: CopyToClipboardParams) => {
     });
 };
 
+export async function RunGenerator<T>(genObj: Generator<any, T, any>): Promise<T> {
+  let result = genObj.next();
+  while(!result.done) {
+    const yieldedValue = await result.value;
+    result = genObj.next(yieldedValue);
+  }
+  return result.value;
+}
+
 interface SortStatus {
   columnAccessor: PropertyKey;
   direction: "asc" | "desc";

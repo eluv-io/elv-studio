@@ -35,6 +35,7 @@ import {
 import SectionTitle from "@/components/section-title/SectionTitle.tsx";
 import {Dropzone, FileWithPath} from "@mantine/dropzone";
 import {Permission, S3RegionName} from "@/types/eluvio.ts";
+import {RunGenerator} from "@/utils/helpers.ts";
 
 interface HandleRemoveProps {
   index: number;
@@ -289,6 +290,7 @@ const Create = observer(() => {
     resetEncryption=true
   }: {libraryId: string | null; type: "MASTER" | "MEZ"; resetEncryption?: boolean}) => {
     const library = ingestStore.GetLibrary(libraryId);
+    if(!library) { return; }
     const libraryHasCert = !!library.drmCert;
     setHasDrmCert(libraryHasCert);
 
@@ -312,10 +314,10 @@ const Create = observer(() => {
       } else {
         SetAbrProfile({profile: library.abr, stringify: true});
 
-        setDisableClear(!library.abrProfileSupport.clear);
-        setDisableDrmAll(!libraryHasCert || !library.abrProfileSupport.drmAll || permission === "owner");
-        setDisableDrmPublic(!libraryHasCert || !library.abrProfileSupport.drmPublic || permission === "owner");
-        setDisableDrmRestricted(!libraryHasCert || !library.abrProfileSupport.drmRestricted || permission === "owner");
+        setDisableClear(!library.abrProfileSupport?.clear);
+        setDisableDrmAll(!libraryHasCert || !library.abrProfileSupport?.drmAll || permission === "owner");
+        setDisableDrmPublic(!libraryHasCert || !library.abrProfileSupport?.drmPublic || permission === "owner");
+        setDisableDrmRestricted(!libraryHasCert || !library.abrProfileSupport?.drmRestricted || permission === "owner");
       }
 
       if(resetEncryption) {
@@ -428,24 +430,24 @@ const Create = observer(() => {
         type = mezContentType;
       }
 
-      let createParams = {
-        libraryId: masterLibrary,
+      const gen: any = ingestStore.CreateContentObject({
+        libraryId: masterLibrary!,
         mezContentType: type,
         formData: {
           master: {
-            libraryId: masterLibrary,
+            libraryId: masterLibrary!,
             accessGroup: accessGroupAddress,
             files: uploadMethod === "LOCAL" ? files : undefined,
             title: name,
             description: description,
             s3Url: uploadMethod === "S3" ? s3Url : undefined,
-            playbackEncryption,
+            playbackEncryption: playbackEncryption!,
             access: JSON.stringify(access, null, 2) || "",
             copy: s3Copy,
             abr: abrMetadata
           },
           mez: {
-            libraryId: useMasterAsMez ? masterLibrary : mezLibrary,
+            libraryId: useMasterAsMez ? masterLibrary! : mezLibrary!,
             accessGroup: accessGroupAddress,
             name: name,
             description: description,
@@ -454,9 +456,9 @@ const Create = observer(() => {
             permission: permission
           }
         }
-      };
+      }) || {};
 
-      const createResponse = await ingestStore.CreateContentObject(createParams) || {};
+      const createResponse: {error: string; id: string} = await RunGenerator(gen);
 
       if(createResponse.error) {
         setError({

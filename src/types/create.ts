@@ -5,31 +5,32 @@ export interface CreateFormData {
   contentType?: string;
   master: {
     libraryId: string;
-    accessGroup: string;
-    writeToken: string;
-    files: File[];
+    accessGroup?: string;
+    writeToken?: string;
+    files?: File[];
     title: string;
     description: string;
+    s3Url?: string;
     playbackEncryption: string;
     access: string;
     copy: boolean;
-    abr?: string;
+    abr?: string | object | null;
   };
   mez: {
     libraryId: string;
-    accessGroup: string;
+    accessGroup?: string;
     name: string;
     description: string;
-    displayTitle: string;
+    displayTitle?: string;
     newObject: boolean;
-    permission?: Permission;
-    masterObjectId: string;
-    masterVersionHash: string;
-    abrProfile: AbrProfile;
-    type: string;
-    variant: string;
-    offeringKey: string;
-    access: S3Reference[];
+    permission?: Permission | null;
+    masterObjectId?: string;
+    masterVersionHash?: string;
+    abrProfile?: AbrProfile;
+    type?: string;
+    variant?: string;
+    offeringKey?: string;
+    access?: S3Reference[];
   };
 }
 
