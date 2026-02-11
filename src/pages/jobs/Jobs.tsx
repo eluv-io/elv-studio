@@ -10,6 +10,7 @@ import styles from "./Jobs.module.css";
 import ConfirmModal from "@/components/confirm-modal/ConfirmModal.tsx";
 import CopyButton from "@/components/common/copy-button/CopyButton.tsx";
 import {SortTable} from "@/utils/helpers";
+import {JobStep} from "@/types/job.ts";
 
 const Jobs = observer(() => {
   const [showClearJobsDialog, setShowClearJobsDialog] = useState(false);
@@ -20,7 +21,7 @@ const Jobs = observer(() => {
   });
 
   interface JobStatusProps {
-    currentStep: "upload" | "ingest" | "finalize";
+    currentStep: JobStep;
     uploadPercentage: number;
     estimatedTimeLeft: string;
     runState: string;

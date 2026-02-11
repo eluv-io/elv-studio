@@ -11,18 +11,27 @@ import {RootStore} from "@/stores/index.ts";
 import {AccessGroup, Library, ContentType} from "@/types";
 import {Job, JobStep} from "@/types/job.ts";
 import {AbrProfile} from "@/types/abr-profile.ts";
+import {CreateFormData, S3Reference} from "@/types/create.ts";
 
-interface IngestDataProps {
-  error: any;
-  errorMessage: string;
-  errorLog: string;
-  active: boolean;
-  lastUpdatedTime?: string;
+interface CreateProductionMasterProps {
+  libraryId: string;
+  files: File[];
+  title: string;
+  displayTitle: string;
+  abr: AbrProfile;
+  accessGroupAddress: string;
+  playbackEncryption: string;
+  description: string;
+  s3Url: string;
+  access: S3Reference[];
+  copy: boolean;
+  masterObjectId: string;
+  writeToken: string;
 }
 
 class IngestStore {
   libraries?: {[libraryId: string]: Library};
-  accessGroups?: {[accessGroupId: string]: AccessGroup};
+  accessGroups: {[accessGroupId: string]: AccessGroup} = {};
   loaded = false;
   jobs: {[jobId: string]: Job} = {};
   job?: Job;
@@ -59,7 +68,7 @@ class IngestStore {
     this.jobs = jobs;
   }
 
-  UpdateIngestObject = ({id, data}: {id: string; data: IngestDataProps}) => {
+  UpdateIngestObject = ({id, data}: {id: string; data: Partial<Job>}) => {
     if(!this.jobs) { this.jobs = {}; }
 
     if(!this.jobs[id]) {
@@ -125,11 +134,11 @@ class IngestStore {
     );
   };
 
-  *ShowWarningDialog({title, description}: {title: string; description: string}): Generator<Promise<"YES"|"NO">, any, any> {
+  ShowWarningDialog({title, description}: {title: string; description: string}) {
     this.showDialog = true;
     this.dialog = { title, description };
 
-    return yield new Promise<"YES"|"NO">((resolve) => {
+    return new Promise<"YES"|"NO">((resolve) => {
       this.dialogResponse = resolve;
     });
   };
@@ -324,7 +333,7 @@ class IngestStore {
           })
         );
 
-         
+
         const sortedArray = Object.entries(loadedLibraries).sort(([_id1, obj1], [_id2, obj2]) => obj1.name.localeCompare(obj2.name));
         this.libraries = Object.fromEntries(sortedArray);
       }
@@ -334,11 +343,11 @@ class IngestStore {
     }
   };
 
-  LoadAccessGroups = flow(function * () {
+  *LoadAccessGroups(): Generator<Promise<any>, void, any> {
     try {
       if(!this.accessGroups) {
         this.accessGroups = {};
-        const accessGroups = yield this.client.ListAccessGroups() || [];
+        const accessGroups: AccessGroup[] = yield this.client.ListAccessGroups() || [];
         accessGroups
           .sort((a, b) => (a.meta.name || a.id).localeCompare(b.meta.name || b.id))
           .map(async accessGroup => {
@@ -353,9 +362,9 @@ class IngestStore {
       // eslint-disable-next-line no-console
       console.error("Failed to load access groups", error);
     }
-  });
+  };
 
-  GetContentAdminsGroupAddress = flow(function * () {
+  *GetContentAdminsGroupAddress(): Generator<Promise<string>, string, string> {
     try {
       const tenantContractId = yield this.client.userProfileClient.TenantContractId();
       const contentAdminGroupAddress = yield this.client.CallContractMethod({
@@ -375,10 +384,12 @@ class IngestStore {
       console.error("Error retrieving content admins group:");
       // eslint-disable-next-line no-console
       console.error(error);
-    }
-  });
 
-  AddContentAdminsGroupPermissions = flow(function * ({objectId}) {
+      return "";
+    }
+  };
+
+  *AddContentAdminsGroupPermissions({objectId}: {objectId: string}): Generator<any, void, string> {
     try {
       // Automatically add permissions for content manage
       const contentAdminsGroupAddress = yield this.GetContentAdminsGroupAddress();
@@ -393,11 +404,11 @@ class IngestStore {
       // eslint-disable-next-line no-console
       console.error(error);
     }
-  });
+  };
 
-  CreateContentObject = flow(function * ({libraryId, mezContentType, formData}) {
+  *CreateContentObject({libraryId, mezContentType, formData}: {libraryId: string; mezContentType: string; formData: CreateFormData}): Generator<any, any, any> {
     let createResponse;
-    let totalFileSize;
+    let totalFileSize = 0;
     try {
       createResponse = yield this.client.CreateContentObject({
         libraryId,
@@ -448,9 +459,9 @@ class IngestStore {
       console.error("Failed to create content object.", error);
       return { error };
     }
-  });
+  };
 
-  CreateProductionMaster = flow(function * ({
+  *CreateProductionMaster({
     libraryId,
     files,
     title,
@@ -464,7 +475,7 @@ class IngestStore {
     copy,
     masterObjectId,
     writeToken
-  }) {
+  }: CreateProductionMasterProps): Generator<Promise<any>, void, any> {
     ValidateLibrary(libraryId);
 
     this.UpdateIngestObject({
@@ -493,7 +504,7 @@ class IngestStore {
     }
 
     try {
-      const UploadCallback = (progress) => {
+      const UploadCallback = (progress: {uploaded: number; total: number}[]) => {
         let uploadSum = 0;
         let totalSum = 0;
         Object.values(progress).forEach(fileProgress => {
@@ -618,7 +629,7 @@ class IngestStore {
         return this.HandleError({
           step: "ingest",
           errorMessage: "Unable to get media information from production master.",
-          error: errors.map(e => e.toString()).join(", "),
+          error: errors.map((e: any) => e.toString()).join(", "),
           id: masterObjectId
         });
       }
@@ -654,6 +665,7 @@ class IngestStore {
           return this.HandleError({
             step: "ingest",
             errorMessage: "Canceled ingest due to missing streams.",
+            error: "User canceled ingest",
             id: masterObjectId
           });
         }
@@ -787,7 +799,7 @@ class IngestStore {
         warnings: warnings || []
       }
     );
-  });
+  };
 
   CreateABRMezzanine = flow(function * ({
     libraryId,

@@ -12,13 +12,14 @@ export interface ContentObjectMetadataParams {
 
 export interface Library {
   libraryId: string;
-  name?: string;
+  name: string;
   abr?: any;
   drm?: {
     fps?: {
       cert?: string;
     };
   };
+  drmCert: string;
   abrProfileSupport?: {
     drmAll: boolean;
     drmPublic: boolean;

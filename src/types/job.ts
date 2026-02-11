@@ -1,9 +1,9 @@
-import {AbrProfile} from "@/types/abr-profile.ts";
+import {CreateFormData} from "@/types/create.ts";
 
 export type JobStep = "create" | "upload" | "ingest" | "finalize";
 
 export interface Job {
-  currentStep: "" | "finalize";
+  currentStep: JobStep | "";
   create?: {
     complete?: boolean;
     runState?: "finished"
@@ -36,25 +36,14 @@ export interface Job {
   mezNodeUrl?: string;
   embedUrl?: string;
   contentType?: string;
+  error?: any;
+  errorMessage?: string;
+  errorLog?: string;
   _title?: string;
   _objectId?: string;
   streams?: {
     audio: boolean;
     video: boolean;
   };
-  formData?: {
-    master?: {
-      libraryId: string;
-      title: string;
-      desription: string;
-      playbackEncryption: string;
-      copy: boolean;
-      writeToken?: string;
-    };
-    mez?: {
-      libraryId: string;
-      masterObjectId: string;
-      abrProfile: AbrProfile;
-    };
-  }
+  formData?: CreateFormData
 }
