@@ -47,12 +47,12 @@ interface CreateABRMezzanineProps {
 }
 
 class IngestStore {
-  libraries: {[libraryId: string]: Library} = {};
-  accessGroups: {[accessGroupId: string]: AccessGroup} = {};
+  _libraries?: {[libraryId: string]: Library};
+  _accessGroups?: {[accessGroupId: string]: AccessGroup};
   loaded = false;
   jobs: {[jobId: string]: Job} = {};
   job?: Job;
-  contentTypes: {[contentTypeId: string]: {name: string}} = {};
+  _contentTypes?: {[contentTypeId: string]: {name: string}};
   showDialog = false;
   dialog = {
     title: "",
@@ -69,6 +69,18 @@ class IngestStore {
 
   get client() {
     return this.rootStore.client;
+  }
+
+  get libraries() {
+    return this._libraries ?? {};
+  }
+
+  get accessGroups() {
+    return this._accessGroups ?? {};
+  }
+
+  get contentTypes() {
+    return this._contentTypes ?? {};
   }
 
   GetLibrary = (libraryId?: string | null) => {
@@ -252,7 +264,7 @@ class IngestStore {
 
   *LoadContentTypes(): Generator<Promise<any>, void, any> {
     try {
-      if(!this.contentTypes) { this.contentTypes = {}; }
+      if(!this.contentTypes) { this._contentTypes = {}; }
 
       const loadedTypes: {[contentTypeId: string]: ContentType} = yield this.client.ContentTypes();
       const sortedTypes = Object.entries(loadedTypes)
@@ -261,7 +273,7 @@ class IngestStore {
           [key, {name: value.name || key}]
         ));
 
-      this.contentTypes = Object.fromEntries(sortedTypes);
+      this._contentTypes = Object.fromEntries(sortedTypes);
     } catch(error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load content types", error);
@@ -270,8 +282,8 @@ class IngestStore {
 
   *LoadLibraries(): Generator<Promise<any>, void, any> {
     try {
-      if(!this.libraries) {
-        this.libraries = {};
+      if(!this._libraries) {
+        this._libraries = {};
         let loadedLibraries: {[libraryId: string]: Library} = {};
 
         const libraryIds: string[] = yield this.client.ContentLibraries() || [];
@@ -352,7 +364,7 @@ class IngestStore {
 
 
         const sortedArray = Object.entries(loadedLibraries).sort(([_id1, obj1], [_id2, obj2]) => obj1.name.localeCompare(obj2.name));
-        this.libraries = Object.fromEntries(sortedArray);
+        this._libraries = Object.fromEntries(sortedArray);
       }
     } catch(error) {
       // eslint-disable-next-line no-console
@@ -362,16 +374,16 @@ class IngestStore {
 
   *LoadAccessGroups(): Generator<Promise<any>, void, any> {
     try {
-      if(!this.accessGroups) {
-        this.accessGroups = {};
+      if(!this._accessGroups) {
+        this._accessGroups = {};
         const accessGroups: AccessGroup[] = yield this.client.ListAccessGroups() || [];
         accessGroups
           .sort((a, b) => (a.meta.name || a.id).localeCompare(b.meta.name || b.id))
           .map(async accessGroup => {
             if(accessGroup.meta["name"]){
-              this.accessGroups[accessGroup.meta["name"]] = accessGroup;
+              this._accessGroups![accessGroup.meta["name"]] = accessGroup;
             } else {
-              this.accessGroups[accessGroup.id] = accessGroup;
+              this._accessGroups![accessGroup.id] = accessGroup;
             }
           });
       }
