@@ -1,4 +1,4 @@
-import {flow, makeAutoObservable} from "mobx";
+import {makeAutoObservable} from "mobx";
 import {ValidateLibrary} from "@eluvio/elv-client-js/src/Validation";
 import UrlJoin from "url-join";
 import {FileInfo} from "@/utils/Files";
@@ -8,7 +8,7 @@ import ABR from "@eluvio/elv-abr-profile";
 import defaultOptions from "@eluvio/elv-lro-status/defaultOptions";
 import enhanceLROStatus from "@eluvio/elv-lro-status/enhanceLROStatus";
 import {RootStore} from "@/stores/index.ts";
-import {AccessGroup, Library, ContentType} from "@/types";
+import {AccessGroup, Library, ContentType, Permission} from "@/types";
 import {Job, JobStep} from "@/types/job.ts";
 import {AbrProfile} from "@/types/abr-profile.ts";
 import {CreateFormData, S3Reference} from "@/types/create.ts";
@@ -27,6 +27,23 @@ interface CreateProductionMasterProps {
   copy: boolean;
   masterObjectId: string;
   writeToken: string;
+}
+
+interface CreateABRMezzanineProps {
+  libraryId: string;
+  masterObjectId: string;
+  accessGroupAddress: string;
+  abrProfile: AbrProfile;
+  name: string;
+  description: string;
+  displayTitle: string;
+  masterVersionHash: string;
+  type: string;
+  newObject: boolean;
+  variant: string;
+  offeringKey: string;
+  access: S3Reference[];
+  permission: Permission;
 }
 
 class IngestStore {
@@ -198,7 +215,7 @@ class IngestStore {
     return abrProfileExclude;
   };
 
-  HandleError = ({id, step, error, errorMessage}: {id: string; step: JobStep; error: any; errorMessage: string}) => {
+  HandleError = ({id, step, error, errorMessage}: {id: string; step: JobStep; error?: any; errorMessage: string}) => {
     this.UpdateIngestObject({
       id,
       data: {
@@ -665,7 +682,6 @@ class IngestStore {
           return this.HandleError({
             step: "ingest",
             errorMessage: "Canceled ingest due to missing streams.",
-            error: "User canceled ingest",
             id: masterObjectId
           });
         }
@@ -719,7 +735,7 @@ class IngestStore {
     }
 
     // Create ABR Ladder
-    let {abrProfile} = yield this.CreateABRLadder({
+    let {abrProfile} = yield* this.CreateABRLadder({
       libraryId,
       objectId: masterObjectId,
       writeToken,
@@ -801,7 +817,7 @@ class IngestStore {
     );
   };
 
-  CreateABRMezzanine = flow(function * ({
+  *CreateABRMezzanine({
     libraryId,
     masterObjectId,
     accessGroupAddress,
@@ -816,7 +832,7 @@ class IngestStore {
     offeringKey="default",
     access=[],
     permission
-  }) {
+  }: CreateABRMezzanineProps): Generator<Promise<any>, void, any> {
     let createResponse;
     try {
       createResponse = yield this.client.CreateABRMezzanine({
@@ -839,9 +855,8 @@ class IngestStore {
     }
     const objectId = createResponse.id;
 
-    yield this.WaitForPublish({
+    yield* this.WaitForPublish({
       hash: createResponse.hash,
-      libraryId,
       objectId
     });
 
@@ -890,15 +905,14 @@ class IngestStore {
       });
     }
 
-    yield this.WaitForPublish({
+    yield* this.WaitForPublish({
       hash,
-      libraryId,
       objectId
     });
 
     let done;
     let errorState;
-    let statusIntervalId;
+    let statusIntervalId: ReturnType<typeof setInterval> | undefined = undefined;
     while(!done && !errorState) {
       let status;
       try {
@@ -961,7 +975,7 @@ class IngestStore {
               (estimated_time_left_seconds === undefined && run_state === "running") ? "Calculating" : estimated_time_left_h_m_s ? `${estimated_time_left_h_m_s} remaining` : ""
             },
             formData: {
-              ...this.jobs[masterObjectId].formData,
+              ...this.jobs[masterObjectId].formData!,
               mez: {
                 libraryId,
                 masterObjectId,
@@ -1044,14 +1058,14 @@ class IngestStore {
 
       yield new Promise(resolve => setTimeout(resolve, 15000));
     }
-  });
+  };
 
-  CreateABRLadder = flow(function * ({
+  *CreateABRLadder({
     libraryId,
     objectId,
     writeToken,
     abr
-  }) {
+  }: {libraryId: string; objectId: string; writeToken: string; abr?: AbrProfile }): Generator<Promise<any>, any, any > {
     try {
       const {production_master} = yield this.client.ContentObjectMetadata({
         libraryId,
@@ -1074,7 +1088,7 @@ class IngestStore {
       const generatedProfile = ABR.ABRProfileForVariant(
         production_master.sources,
         production_master.variants.default,
-        abr ? abr.default_profile : undefined
+        abr ?? undefined
       );
 
       if(!generatedProfile.ok) {
@@ -1097,9 +1111,9 @@ class IngestStore {
         id: objectId
       });
     }
-  });
+  };
 
-  FinalizeABRMezzanine = flow(function * ({libraryId, objectId, masterObjectId}) {
+  *FinalizeABRMezzanine({libraryId, objectId, masterObjectId}: {libraryId: string; objectId: string; masterObjectId: string}): Generator<any, void, any> {
     this.UpdateIngestObject({
       id: masterObjectId,
       data: {
@@ -1115,12 +1129,12 @@ class IngestStore {
       });
 
       const formData = this.jobs[masterObjectId].formData;
-      delete formData.master.abr;
+
+      delete formData?.master.abr;
 
       yield this.WaitForPublish({
         hash: finalizeAbrResponse.hash,
-        objectId,
-        libraryId
+        objectId
       });
 
       this.UpdateIngestObject({
@@ -1145,9 +1159,9 @@ class IngestStore {
         id: objectId
       });
     }
-  });
+  };
 
-  GenerateEmbedUrl = flow(function * ({objectId, mezId}) {
+  *GenerateEmbedUrl({objectId, mezId}: {objectId: string; mezId: string}): Generator<Promise<string>, string, string> {
     const url = yield this.client.EmbedUrl({objectId: mezId});
 
     this.UpdateIngestObject({
@@ -1159,7 +1173,7 @@ class IngestStore {
     });
 
     return url;
-  });
+  };
 }
 
 export default IngestStore;

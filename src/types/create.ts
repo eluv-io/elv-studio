@@ -2,7 +2,7 @@ import {Permission} from "@/types/eluvio.ts";
 import {AbrProfile} from "@/types/abr-profile.ts";
 
 export interface CreateFormData {
-  contentType: string;
+  contentType?: string;
   master: {
     libraryId: string;
     accessGroup: string;
@@ -13,7 +13,7 @@ export interface CreateFormData {
     playbackEncryption: string;
     access: string;
     copy: boolean;
-    abr: string;
+    abr?: string;
   };
   mez: {
     libraryId: string;
@@ -22,9 +22,14 @@ export interface CreateFormData {
     description: string;
     displayTitle: string;
     newObject: boolean;
-    permission: Permission;
+    permission?: Permission;
     masterObjectId: string;
+    masterVersionHash: string;
     abrProfile: AbrProfile;
+    type: string;
+    variant: string;
+    offeringKey: string;
+    access: S3Reference[];
   };
 }
 
