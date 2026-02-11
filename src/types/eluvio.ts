@@ -19,6 +19,41 @@ export interface Library {
       cert?: string;
     };
   };
+  abrProfileSupport?: {
+    drmAll: boolean;
+    drmPublic: boolean;
+    drmRestricted: boolean;
+    clear: boolean;
+  }
+}
+
+export interface ContentType {
+  hash?: string;
+  id?: string;
+  name?: string;
+  meta?: {
+    public?: {
+      name?: string;
+    }
+  }
+}
+
+export interface AccessGroup {
+  address: string;
+  id: string;
+  meta: {
+    commit: {
+      author: string;
+      author_address: string;
+      message: string;
+      timestamp: string;
+    };
+    name: string;
+    public: {
+      name: string;
+    };
+    tenantId: string;
+  }
 }
 
 export interface PermissionLevel {

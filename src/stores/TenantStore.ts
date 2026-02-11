@@ -1,11 +1,13 @@
-import {flow, makeAutoObservable} from "mobx";
+import {makeAutoObservable} from "mobx";
+import type {RootStore} from "@/stores/index";
 
 class TenantStore {
-  tenantId;
-  titleContentType;
+  rootStore: RootStore;
+  tenantId: string = "";
+  titleContentType: string = "";
   loaded = false;
 
-  constructor(rootStore) {
+  constructor(rootStore: RootStore) {
     makeAutoObservable(this);
 
     this.rootStore = rootStore;
@@ -17,13 +19,13 @@ class TenantStore {
     return this.rootStore.client;
   }
 
-  LoadTenantData = flow(function * () {
+  *LoadTenantData(): Generator<any, void, any> {
     try {
       if(!this.tenantId) {
         this.tenantId = yield this.client.userProfileClient.TenantContractId();
 
         if(!this.tenantId) {
-          throw "Tenant ID not found";
+          throw new Error("Tenant ID not found");
         }
       }
 
@@ -42,7 +44,7 @@ class TenantStore {
     } finally {
       this.loaded = true;
     }
-  });
+  };
 }
 
 export default TenantStore;

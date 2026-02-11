@@ -7,22 +7,35 @@ import {DrmPlayReadyWidevine, DrmPublicProfile, DrmWidevineFairplayProfile} from
 import ABR from "@eluvio/elv-abr-profile";
 import defaultOptions from "@eluvio/elv-lro-status/defaultOptions";
 import enhanceLROStatus from "@eluvio/elv-lro-status/enhanceLROStatus";
+import {RootStore} from "@/stores/index.ts";
+import {AccessGroup, Library, ContentType} from "@/types";
+import {Job, JobStep} from "@/types/job.ts";
+import {AbrProfile} from "@/types/abr-profile.ts";
+
+interface IngestDataProps {
+  error: any;
+  errorMessage: string;
+  errorLog: string;
+  active: boolean;
+  lastUpdatedTime?: string;
+}
 
 class IngestStore {
-  libraries;
-  accessGroups;
-  loaded;
-  jobs;
-  job;
-  contentTypes;
+  libraries?: {[libraryId: string]: Library};
+  accessGroups?: {[accessGroupId: string]: AccessGroup};
+  loaded = false;
+  jobs: {[jobId: string]: Job} = {};
+  job?: Job;
+  contentTypes?: {[contentTypeId: string]: {name: string}};
   showDialog = false;
   dialog = {
     title: "",
     description: ""
   };
-  dialogResponse = null;
+  dialogResponse: ((value: "YES"|"NO") => void) | null = null;
+  rootStore: RootStore;
 
-  constructor(rootStore) {
+  constructor(rootStore: RootStore) {
     makeAutoObservable(this);
 
     this.rootStore = rootStore;
@@ -32,19 +45,21 @@ class IngestStore {
     return this.rootStore.client;
   }
 
-  GetLibrary = (libraryId) => {
-    return this.libraries[libraryId];
+  GetLibrary = (libraryId?: string) => {
+    if(!this.libraries) { return null; }
+
+    return libraryId ? this.libraries[libraryId] : null;
   };
 
-  SetJob(jobId) {
-    this.job = this.jobs[jobId];
+  SetJob(jobId: string) {
+    this.job = this.jobs ? this.jobs[jobId] : undefined;
   }
 
-  UpdateIngestJobs({jobs}) {
+  UpdateIngestJobs({jobs}: {jobs: {[jobId: string]: Job}}) {
     this.jobs = jobs;
   }
 
-  UpdateIngestObject = ({id, data}) => {
+  UpdateIngestObject = ({id, data}: {id: string; data: IngestDataProps}) => {
     if(!this.jobs) { this.jobs = {}; }
 
     if(!this.jobs[id]) {
@@ -89,9 +104,9 @@ class IngestStore {
   };
 
   ClearInactiveJobs = () => {
-    const jobs = {};
-    Object.keys(this.jobs).forEach(jobId => {
-      let job = this.jobs[jobId];
+    const jobs: {[jobId: string]: Job} = {};
+    Object.keys(this.jobs || {}).forEach(jobId => {
+      let job = (this.jobs || {})[jobId];
       if(!job.lastUpdatedTime || !job.active) { return; }
 
       const lastUpdatedDifference = (
@@ -110,24 +125,24 @@ class IngestStore {
     );
   };
 
-  ShowWarningDialog = flow(function * ({title, description}) {
+  *ShowWarningDialog({title, description}: {title: string; description: string}): Generator<Promise<"YES"|"NO">, any, any> {
     this.showDialog = true;
-    this.dialog = {
-      title,
-      description
-    };
+    this.dialog = { title, description };
 
-    return yield new Promise(resolve => {
+    return yield new Promise<"YES"|"NO">((resolve) => {
       this.dialogResponse = resolve;
     });
-  });
-
-  HideWarningDialog = (response) => {
-    this.showDialog = false;
-    this.dialogResponse(response);
   };
 
-  WaitForPublish = flow (function * ({hash, objectId}) {
+  HideWarningDialog = (response: "YES"|"NO") => {
+    this.showDialog = false;
+
+    if(this.dialogResponse) {
+      this.dialogResponse(response);
+    }
+  };
+
+  *WaitForPublish({hash, objectId}: {hash: string; objectId: string}): Generator<Promise<any>, void, string> {
     let publishFinished = false;
     let latestObjectHash;
     while(!publishFinished) {
@@ -147,9 +162,9 @@ class IngestStore {
         yield new Promise(resolve => setTimeout(resolve, 7000));
       }
     }
-  });
+  };
 
-  RestrictAbrProfile = ({playbackEncryption, abrProfile}) => {
+  RestrictAbrProfile = ({playbackEncryption, abrProfile}: {playbackEncryption: string; abrProfile: AbrProfile}) => {
     let abrProfileExclude;
 
     if(playbackEncryption === "drm-all") {
@@ -174,7 +189,7 @@ class IngestStore {
     return abrProfileExclude;
   };
 
-  HandleError = ({id, step, error, errorMessage}) => {
+  HandleError = ({id, step, error, errorMessage}: {id: string; step: JobStep; error: any; errorMessage: string}) => {
     this.UpdateIngestObject({
       id,
       data: {
@@ -195,11 +210,11 @@ class IngestStore {
     throw error;
   };
 
-  ContentType = flow(function * ({name, typeId, versionHash}) {
+  *ContentType({name, typeId, versionHash}: {name: string; typeId: string; versionHash: string}): Generator<void, Promise<object>, any> {
     return yield this.client.ContentType({name, typeId, versionHash});
-  });
+  };
 
-  LoadDependencies = flow(function * () {
+  *LoadDependencies() {
     try {
       yield this.LoadLibraries();
       yield this.LoadAccessGroups();
@@ -207,13 +222,13 @@ class IngestStore {
     } finally {
       this.loaded = true;
     }
-  });
+  };
 
-  LoadContentTypes = flow(function * () {
+  *LoadContentTypes(): Generator<Promise<any>, void, any> {
     try {
       if(!this.contentTypes) { this.contentTypes = {}; }
 
-      const loadedTypes = yield this.client.ContentTypes();
+      const loadedTypes: {[contentTypeId: string]: ContentType} = yield this.client.ContentTypes();
       const sortedTypes = Object.entries(loadedTypes)
         .sort(([id1, obj1], [id2, obj2]) => (obj1.name || id1).localeCompare(obj2.name || id2))
         .map(([key, value]) => (
@@ -225,15 +240,15 @@ class IngestStore {
       // eslint-disable-next-line no-console
       console.error("Failed to load content types", error);
     }
-  });
+  };
 
-  LoadLibraries = flow(function * () {
+  *LoadLibraries(): Generator<Promise<any>, void, any> {
     try {
       if(!this.libraries) {
         this.libraries = {};
-        let loadedLibraries = {};
+        let loadedLibraries: {[libraryId: string]: Library} = {};
 
-        const libraryIds = yield this.client.ContentLibraries() || [];
+        const libraryIds: string[] = yield this.client.ContentLibraries() || [];
         yield Promise.all(
           libraryIds.map(async libraryId => {
             let response;
@@ -272,13 +287,13 @@ class IngestStore {
             };
 
             if(response.abr && response.abr.default_profile) {
-              ["drm-all", "drm-public", "drm-restricted", "clear"].forEach(drmFormat => {
+              (["drm-all", "drm-public", "drm-restricted", "clear"] as const).forEach((drmFormat) => {
                 const formatSupportMap = {
                   "drm-all": "drmAll",
                   "drm-public": "drmPublic",
                   "drm-restricted": "drmRestricted",
                   "clear": "clear"
-                };
+                } as const;
 
                 const restrictedProfile = this.RestrictAbrProfile({
                   playbackEncryption: drmFormat,
@@ -309,15 +324,15 @@ class IngestStore {
           })
         );
 
-        // eslint-disable-next-line no-unused-vars
-        const sortedArray = Object.entries(loadedLibraries).sort(([id1, obj1], [id2, obj2]) => obj1.name.localeCompare(obj2.name));
+         
+        const sortedArray = Object.entries(loadedLibraries).sort(([_id1, obj1], [_id2, obj2]) => obj1.name.localeCompare(obj2.name));
         this.libraries = Object.fromEntries(sortedArray);
       }
     } catch(error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load libraries", error);
     }
-  });
+  };
 
   LoadAccessGroups = flow(function * () {
     try {

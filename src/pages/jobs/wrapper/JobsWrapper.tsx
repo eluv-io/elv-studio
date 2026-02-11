@@ -13,9 +13,9 @@ const JobsWrapper = observer(({children}: {children: ReactNode}) => {
     } else {
       ingestStore.UpdateIngestJobs({jobs: {}});
     }
-  }, []);
+  }, [ingestStore]);
 
-  if(!ingestStore.jobs) { return <Loader />; }
+  if(!ingestStore.jobs || Object.keys(ingestStore.jobs)?.length === 0) { return <Loader />; }
 
   return children;
 });
