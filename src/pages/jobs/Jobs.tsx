@@ -10,7 +10,7 @@ import styles from "./Jobs.module.css";
 import ConfirmModal from "@/components/confirm-modal/ConfirmModal.tsx";
 import CopyButton from "@/components/common/copy-button/CopyButton.tsx";
 import {SortTable} from "@/utils/helpers";
-import {JobStep} from "@/types/job.ts";
+import {JobStep, RunState} from "@/types/job.ts";
 
 const Jobs = observer(() => {
   const [showClearJobsDialog, setShowClearJobsDialog] = useState(false);
@@ -21,11 +21,11 @@ const Jobs = observer(() => {
   });
 
   interface JobStatusProps {
-    currentStep: JobStep;
-    uploadPercentage: number;
-    estimatedTimeLeft: string;
-    runState: string;
-    error: string;
+    currentStep: JobStep | "";
+    uploadPercentage?: number;
+    estimatedTimeLeft?: string;
+    runState?: RunState;
+    error?: unknown;
   }
 
   const JobStatus = ({
@@ -35,7 +35,8 @@ const Jobs = observer(() => {
     runState,
     error
   }: JobStatusProps) => {
-    const statusMap = {
+    const statusMap: Record<JobStep, string> = {
+      "create": "Creating",
       "upload": "Uploading",
       "ingest": "Ingesting",
       "finalize": "Finalizing"
@@ -46,7 +47,7 @@ const Jobs = observer(() => {
     } else if(error) {
       return "Failed";
     } else {
-      let statusMessage = statusMap[currentStep];
+      let statusMessage = currentStep ? statusMap[currentStep] : "";
       if(currentStep === "upload") {
         statusMessage = `${statusMessage} ${uploadPercentage ? `${uploadPercentage}%` : ""}`;
       } else if(currentStep === "ingest") {
@@ -80,7 +81,7 @@ const Jobs = observer(() => {
         <ConfirmModal
           title="Clear Jobs"
           message="Are you sure you want to clear all inactive jobs? This action cannot be undone."
-          ConfirmCallback={() => ingestStore.ClearInactiveJobs()}
+          ConfirmCallback={async () => ingestStore.ClearInactiveJobs()}
           show={showClearJobsDialog}
           CloseCallback={() => setShowClearJobsDialog(false)}
         />
@@ -93,7 +94,7 @@ const Jobs = observer(() => {
           records={records}
           noRecordsText="No Records"
           onRowClick={({record}) => {
-            navigate(record._objectId);
+            if(record._objectId) { navigate(record._objectId); }
           }}
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
@@ -106,7 +107,7 @@ const Jobs = observer(() => {
               sortable: true,
               render: record => (
                 <Group>
-                  <CopyButton value={record._objectId} />
+                  <CopyButton value={record._objectId || ""} />
                 </Group>
               )
             },

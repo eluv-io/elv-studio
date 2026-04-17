@@ -5,7 +5,7 @@ import AppRoutes from "./Routes.js";
 import SideNavigation from "@/components/side-navigation/SideNavigation.tsx";
 import ConfirmModal from "@/components/confirm-modal/ConfirmModal.tsx";
 import JobsWrapper from "@/pages/jobs/wrapper/JobsWrapper.tsx";
-import {ingestStore, rootStore, uiStore} from "@/stores/index.js";
+import {ingestStore, rootStore} from "@/stores/index.js";
 import MantineTheme from "@/assets/MantineTheme.ts";
 
 import {AppShell, Loader, MantineProvider} from "@mantine/core";
@@ -17,7 +17,7 @@ import "./assets/GlobalStyles.css";
 
 const App = observer(() => {
   return (
-    <MantineProvider withCssVariables theme={{colorScheme: uiStore.theme, ...MantineTheme}}>
+    <MantineProvider withCssVariables theme={MantineTheme}>
       <BrowserRouter>
         <AppShell
           padding={0}
@@ -40,7 +40,7 @@ const App = observer(() => {
               confirmText="Yes"
               cancelText="No"
               CloseCallback={() => ingestStore.HideWarningDialog("NO")}
-              ConfirmCallback={() => ingestStore.HideWarningDialog("YES")}
+              ConfirmCallback={async () => ingestStore.HideWarningDialog("YES")}
             />
           </AppShell.Main>
         </AppShell>

@@ -535,7 +535,7 @@ const Create = observer(() => {
                       <Dropzone.Reject>
                         <CloseIcon
                           style={{ width: "8rem", height: "8rem", color: "var(--mantine-color-red-6)" }}
-                          stroke={1.5}
+                          stroke={"1.5"}
                         />
                       </Dropzone.Reject>
                       <Dropzone.Idle>

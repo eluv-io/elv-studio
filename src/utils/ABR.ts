@@ -1,6 +1,7 @@
 import defaultAbrDrmProfile from "./profiles/abrProfileDrm.json";
 import defaultAbrClearProfile from "./profiles/abrProfileClear.json";
 import defaultAbrBothProfile from "./profiles/abrProfileBoth.json";
+import {AbrProfile} from "@/types/abr-profile.ts";
 
 /**
  * Manipulate ABR Profile to return only Widevine and
@@ -9,7 +10,7 @@ import defaultAbrBothProfile from "./profiles/abrProfileBoth.json";
  *
  * @returns {Object} - ABR Profile with the appropriate playout formats
  */
-export const DrmWidevineFairplayProfile = ({abrProfile={}}) => {
+export const DrmWidevineFairplayProfile = ({abrProfile = {} as AbrProfile}: {abrProfile?: AbrProfile}) => {
   if(!abrProfile.playout_formats) { abrProfile["playout_formats"] = {}; }
 
   const restrictedFormats = {
@@ -17,7 +18,7 @@ export const DrmWidevineFairplayProfile = ({abrProfile={}}) => {
     "dash-widevine": abrProfile.playout_formats["dash-widevine"]
   };
 
-  const hasPlayouts = Object.keys(restrictedFormats).some(format => abrProfile.playout_formats[format]);
+  const hasPlayouts = Object.keys(restrictedFormats).some(format => abrProfile.playout_formats ? abrProfile.playout_formats[format] : null);
 
   abrProfile.playout_formats = restrictedFormats;
 
@@ -27,12 +28,12 @@ export const DrmWidevineFairplayProfile = ({abrProfile={}}) => {
   };
 };
 
-export const DrmPublicProfile = ({abrProfile}) => {
-  let playoutFormats = {};
+export const DrmPublicProfile = ({abrProfile}: {abrProfile: AbrProfile}) => {
+  let playoutFormats: NonNullable<AbrProfile["playout_formats"]> = {};
 
   Object.keys(abrProfile.playout_formats || {}).forEach(formatName => {
     if(!["fairplay", "clear"].some(name => formatName.includes(name))) {
-      playoutFormats[formatName] = abrProfile.playout_formats[formatName];
+      playoutFormats[formatName] = abrProfile.playout_formats![formatName];
     }
   });
 
@@ -51,7 +52,11 @@ export const DrmPublicProfile = ({abrProfile}) => {
  *
  * @returns {Object} - ABR Profile with the appropriate playout formats
  */
-export const DrmPlayReadyWidevine = ({abrProfile}) => {
+export const DrmPlayReadyWidevine = ({abrProfile}: {abrProfile: AbrProfile}) => {
+  if(!abrProfile.playout_formats) {
+    abrProfile.playout_formats = {};
+  }
+
   abrProfile.playout_formats["hls-widevine-cenc"] = {
     "drm": {
       "enc_scheme_name": "cenc",

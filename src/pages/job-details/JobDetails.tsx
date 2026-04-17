@@ -3,6 +3,8 @@ import {useNavigate, useParams} from "react-router";
 import {observer} from "mobx-react-lite";
 
 import {ingestStore} from "@/stores";
+import {Permission} from "@/types/eluvio.ts";
+import {AbrProfile} from "@/types/abr-profile.ts";
 import {ExclamationCircleIcon} from "@/assets/icons";
 import JSONView from "@/components/common/json-view/JSONView.tsx";
 import {
@@ -74,7 +76,7 @@ const ErrorDialog = observer(({jobId, showErrorDialog, setShowErrorDialog}: Erro
       closeOnClickOutside={false}
       withCloseButton={false}
     >
-      <JSONView json={ingestStore.jobs[jobId].errorLog} copyable={true} />
+      <JSONView json={ingestStore.jobs[jobId].errorLog || ""} copyable={true} />
 
       <Flex mt="1.5rem" justify="flex-end">
         <Button
@@ -95,32 +97,35 @@ const JobDetails = observer(() => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if(!jobId) { return; }
     ingestStore.SetJob(jobId);
 
     HandleIngest();
   }, []);
 
   const HandleIngest = async () => {
-    if(ingestStore.job.currentStep !== "create" || ingestStore.job.create.runState !== "finished") { return; }
+    if(!jobId || !ingestStore.job?.formData) { return; }
+    if(ingestStore.job.currentStep !== "create" || ingestStore.job.create?.runState !== "finished") { return; }
 
     const {abr, access, copy, files, libraryId, title, accessGroup, description, s3Url, writeToken, playbackEncryption} = ingestStore.job.formData.master;
     const mezFormData = ingestStore.job.formData.mez;
     const {contentType} = ingestStore.job.formData;
 
-    const response = await ingestStore.CreateProductionMaster({
+     
+    const response: any = await ingestStore.CreateProductionMaster({
       libraryId,
-      files,
+      files: files ?? [],
       title,
       description,
-      s3Url,
-      abr: abr ? JSON.parse(abr) : undefined,
-      accessGroupAddress: accessGroup,
+      s3Url: s3Url ?? "",
+      abr: (typeof abr === "string" ? JSON.parse(abr) : abr) as AbrProfile,
+      accessGroupAddress: accessGroup ?? "",
       access: JSON.parse(access),
       copy,
       masterObjectId: jobId,
-      writeToken,
+      writeToken: writeToken ?? "",
       playbackEncryption,
-      displayTitle: mezFormData.displayTitle
+      displayTitle: mezFormData.displayTitle ?? ""
     });
 
     if(!response) { return; }
@@ -129,8 +134,7 @@ const JobDetails = observer(() => {
 
     await ingestStore.WaitForPublish({
       hash: response.hash,
-      objectId: jobId,
-      libraryId: libraryId
+      objectId: jobId
     });
 
     await ingestStore.CreateABRMezzanine({
@@ -138,14 +142,16 @@ const JobDetails = observer(() => {
       masterObjectId: response.id,
       masterVersionHash: response.hash,
       abrProfile: response.abrProfile,
-      type: contentType,
+      type: contentType ?? "",
       name: mezFormData.name,
-      accessGroupAddress: mezFormData.accessGroup,
+      accessGroupAddress: mezFormData.accessGroup ?? "",
       description: mezFormData.description,
-      displayTitle: mezFormData.displayTitle,
+      displayTitle: mezFormData.displayTitle ?? "",
+      variant: "default",
+      offeringKey: "default",
       newObject: mezFormData.newObject,
       access: JSON.parse(access),
-      permission: mezFormData.permission
+      permission: (mezFormData.permission ?? "editable") as Permission
     });
   };
 

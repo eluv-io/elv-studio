@@ -7,23 +7,26 @@ interface RungSpec {
 }
 
 export interface AbrProfile {
-  drm_optional: boolean;
-  store_clear: boolean;
-  ladder_specs: {
+  drm_optional?: boolean;
+  store_clear?: boolean;
+  ladder_specs?: {
     [key: string]: {
       run_specs: RungSpec[]
     }
   };
-  playout_formats: {
+  playout_formats?: {
     [key: string]: {
-      drm: boolean | null;
+      drm: boolean | null | {
+        enc_scheme_name: string;
+        type: string;
+      };
       protocol: {
-        min_buffer_length: number;
+        min_buffer_length?: number;
         type: "ProtoDash" | "ProtoHls";
       }
     }
   };
-  segment_specs: {
+  segment_specs?: {
     audio: {
       segs_per_chunk: number;
       target_dur: number;

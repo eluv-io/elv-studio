@@ -1,25 +1,26 @@
 import {CreateFormData} from "@/types/create.ts";
 
 export type JobStep = "create" | "upload" | "ingest" | "finalize";
+export type RunState = "finished" | "failed";
 
 export interface Job {
   currentStep: JobStep | "";
   create?: {
     complete?: boolean;
-    runState?: "finished"
+    runState?: RunState;
   };
   upload: {
     percentage?: number;
     complete?: boolean;
-    runState?: "finished"
+    runState?: RunState;
   };
   ingest: {
-    runState?: "finished";
+    runState?: RunState;
     estimatedTimeLeft?: string;
   };
   finalize: {
     complete?: boolean;
-    runState?: "finished";
+    runState?: RunState;
     mezzanineHash?: string;
     objectId?: string;
   };

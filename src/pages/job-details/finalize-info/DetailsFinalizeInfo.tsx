@@ -29,8 +29,8 @@ const DetailsFinalizeInfo = observer(({jobId}: {jobId: string}) => {
       label: "ID",
       value: ingestStore.jobs[jobId].finalize.objectId,
       onClick: () => OpenObjectLink({
-        libraryId: ingestStore.jobs[jobId].formData?.mez.libraryId,
-        objectId: ingestStore.jobs[jobId].finalize.objectId
+        libraryId: ingestStore.jobs[jobId].formData?.mez?.libraryId ?? "",
+        objectId: ingestStore.jobs[jobId].finalize.objectId ?? ""
       }),
       clickTitle: "Open in Fabric Browser"
     },
@@ -50,7 +50,7 @@ const DetailsFinalizeInfo = observer(({jobId}: {jobId: string}) => {
           <DetailRow
             key={`row-${label}-${value}`}
             label={label}
-            value={value}
+            value={value || ""}
             copyable={copyable}
             onClick={onClick}
             clickTitle={clickTitle}

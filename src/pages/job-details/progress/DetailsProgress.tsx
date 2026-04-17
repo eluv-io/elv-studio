@@ -3,6 +3,7 @@ import {Box, Loader, SimpleGrid, Text} from "@mantine/core";
 import SectionTitle from "@/components/section-title/SectionTitle.tsx";
 import TextCard from "@/components/text-card/TextCard.tsx";
 import {ingestStore} from "@/stores/index.js";
+import {RunState} from "@/types/job.ts";
 import {CheckmarkIcon} from "@/assets/icons/index.tsx";
 import styles from "./DetailsProgress.module.css";
 
@@ -15,10 +16,10 @@ const DetailsProgress = observer(({jobId}: {jobId: string}) => {
         <TextCard
           title="Upload"
           message={
-            ["finished", "failed"].includes(ingestStore.jobs[jobId].upload.runState) ? undefined : `... ${ingestStore.jobs[jobId].upload.percentage || 0}%`
+            (["finished", "failed"] as RunState[]).includes(ingestStore.jobs[jobId].upload.runState as RunState) ? undefined : `... ${ingestStore.jobs[jobId].upload.percentage || 0}%`
           }
           rightSection={
-            ingestStore.jobs[jobId].upload.runState === "failed" ?
+            (ingestStore.jobs[jobId].upload.runState as RunState | undefined) === "failed" ?
               <Text c="elv-red.5">
                 Failed
               </Text> :
@@ -37,7 +38,7 @@ const DetailsProgress = observer(({jobId}: {jobId: string}) => {
             ingestStore.jobs[jobId].ingest.runState === "failed" ? "" : ingestStore.jobs[jobId].ingest.estimatedTimeLeft ? `... ${ingestStore.jobs[jobId].ingest.estimatedTimeLeft}` : ""
           }
           rightSection={
-            ingestStore.jobs[jobId].ingest.runState === "failed" ?
+            (ingestStore.jobs[jobId].ingest.runState as RunState | undefined) === "failed" ?
               <Text c="elv-red.5">
                 Failed
               </Text> :
@@ -54,7 +55,7 @@ const DetailsProgress = observer(({jobId}: {jobId: string}) => {
         <TextCard
           title="Finalize"
           rightSection={
-            ingestStore.jobs[jobId].finalize.runState === "failed" ?
+            (ingestStore.jobs[jobId].finalize.runState as RunState | undefined) === "failed" ?
               <Text c="elv-red.5">
                 Failed
               </Text> :
@@ -65,7 +66,7 @@ const DetailsProgress = observer(({jobId}: {jobId: string}) => {
                   <Loader size={20} />
               )
           }
-          complete={ingestStore.jobs[jobId].finalize.objectId}
+          complete={Boolean(ingestStore.jobs[jobId].finalize.objectId)}
         />
       </SimpleGrid>
     </Box>
