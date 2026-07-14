@@ -1,10 +1,10 @@
 import {useEffect, useState} from "react";
-import {useNavigate, useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router";
 import {observer} from "mobx-react-lite";
 
 import {ingestStore} from "@/stores";
 import {ExclamationCircleIcon} from "@/assets/icons";
-import JSONView from "@/components/common/JSONView";
+import JSONView from "@/components/common/json-view/JSONView.jsx";
 import {
   Alert,
   Box,
