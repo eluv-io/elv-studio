@@ -8,6 +8,33 @@ import ABR from "@eluvio/elv-abr-profile";
 import defaultOptions from "@eluvio/elv-lro-status/defaultOptions";
 import enhanceLROStatus from "@eluvio/elv-lro-status/enhanceLROStatus";
 
+// Some fabric nodes report LRO `duration` as a Go-formatted duration string (e.g. "0s", "1m30s")
+// instead of the nanosecond Number that @eluvio/elv-lro-status expects. Parse it back into nanoseconds.
+const ParseGoDuration = durationStr => {
+  const unitToNs = {ns: 1, "µs": 1e3, us: 1e3, ms: 1e6, s: 1e9, m: 60e9, h: 3600e9};
+  const regex = /([0-9]*\.?[0-9]+)(ns|µs|us|ms|s|m|h)/g;
+
+  let totalNs = 0;
+  let matched = false;
+  let match;
+  while((match = regex.exec(durationStr))) {
+    matched = true;
+    totalNs += parseFloat(match[1]) * unitToNs[match[2]];
+  }
+
+  return matched ? totalNs : durationStr;
+};
+
+const SanitizeLROStatus = status =>
+  Object.fromEntries(
+    Object.entries(status).map(([lroId, entry]) => [
+      lroId,
+      typeof entry.duration === "string" ?
+        {...entry, duration: ParseGoDuration(entry.duration)} :
+        entry
+    ])
+  );
+
 class IngestStore {
   libraries;
   accessGroups;
@@ -939,7 +966,7 @@ class IngestStore {
           defaultOptions(),
           {currentTime: new Date()}
         );
-        const enhancedStatus = enhanceLROStatus(options, status);
+        const enhancedStatus = enhanceLROStatus(options, SanitizeLROStatus(status));
 
         if(!enhancedStatus.ok) {
           clearInterval(statusIntervalId);
