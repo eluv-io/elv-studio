@@ -61,6 +61,7 @@ const Permissions = ({permission, setPermission}) => {
         )
       }
       value={permission}
+      allowDeselect={false}
       onChange={value => setPermission(value)}
       data={
         Object.keys(permissionLevels || []).map(permissionName => (
