@@ -98,46 +98,7 @@ const JobDetails = observer(() => {
   const HandleIngest = async () => {
     if(ingestStore.job.currentStep !== "create" || ingestStore.job.create.runState !== "finished") { return; }
 
-    const {abr, access, copy, files, libraryId, title, accessGroup, description, s3Url, writeToken, playbackEncryption} = ingestStore.job.formData.master;
-    const mezFormData = ingestStore.job.formData.mez;
-    const {contentType} = ingestStore.job.formData;
-
-    const response = await ingestStore.CreateProductionMaster({
-      libraryId,
-      files,
-      title,
-      description,
-      s3Url,
-      abr: abr ? JSON.parse(abr) : undefined,
-      accessGroupAddress: accessGroup,
-      access: JSON.parse(access),
-      copy,
-      masterObjectId: jobId,
-      writeToken,
-      playbackEncryption,
-      displayTitle: mezFormData.displayTitle,
-      finalize: mezFormData.newObject
-    });
-
-    if(!response) { return; }
-
-    await ingestStore.CreateABRMezzanine({
-      libraryId: mezFormData.libraryId,
-      masterObjectId: response.id,
-      masterVersionHash: response.hash,
-      masterWriteToken: (response.id || response.hash) ? undefined : writeToken,
-      writeToken: writeToken,
-      abrProfile: response.abrProfile,
-      type: contentType,
-      name: mezFormData.name,
-      accessGroupAddress: mezFormData.accessGroup,
-      description: mezFormData.description,
-      displayTitle: mezFormData.displayTitle,
-      newObject: mezFormData.newObject,
-      access: JSON.parse(access),
-      permission: mezFormData.permission,
-      jobId: response.jobId
-    });
+    await ingestStore.RunIngestPipeline({jobId});
   };
 
   if(!ingestStore.job) { return <Loader />; }
