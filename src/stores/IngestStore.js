@@ -1360,7 +1360,7 @@ class IngestStore {
           objectId,
           writeToken,
           filePaths: fileInfo.map(f => f.path)
-        })
+        });
       }
 
       const finalizeAbrResponse = yield this.client.FinalizeContentObject({
