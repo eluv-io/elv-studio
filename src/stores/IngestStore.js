@@ -64,11 +64,13 @@ const SanitizeLROStatus = status =>
 
 class IngestStore {
   libraries;
+  librariesLoaded = false;
   accessGroups;
-  loaded;
+  accessGroupsLoaded = false;
   jobs;
   job;
   contentTypes;
+  contentTypesLoaded = false;
   showDialog = false;
   dialog = {
     title: "",
@@ -356,13 +358,9 @@ class IngestStore {
   });
 
   LoadDependencies = flow(function * () {
-    try {
-      yield this.LoadLibraries();
-      yield this.LoadAccessGroups();
-      yield this.LoadContentTypes();
-    } finally {
-      this.loaded = true;
-    }
+    yield this.LoadLibraries();
+    yield this.LoadAccessGroups();
+    yield this.LoadContentTypes();
   });
 
   LoadContentTypes = flow(function * () {
@@ -380,119 +378,127 @@ class IngestStore {
     } catch(error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load content types", error);
+    } finally {
+      this.contentTypesLoaded = true;
     }
   });
 
   LoadLibraries = flow(function * () {
+    if(this.libraries) { return; }
+
+    this.libraries = {};
+
     try {
-      if(!this.libraries) {
-        this.libraries = {};
-        let loadedLibraries = {};
+      let loadedLibraries = {};
 
-        const libraryIds = yield this.client.ContentLibraries() || [];
-        yield Promise.all(
-          libraryIds.map(async libraryId => {
-            let response;
-            try {
-              response = (await this.client.ContentObjectMetadata({
-                libraryId,
-                objectId: libraryId.replace(/^ilib/, "iq__"),
-                select: [
-                  "public/name",
-                  "abr",
-                  "elv/media/drm/fps/cert"
-                ]
-              }));
-            } catch(error) {
-              // eslint-disable-next-line no-console
-              console.error(`Unable to load metadata for ${libraryId}`, error);
-            }
-
-            if(!response) { return; }
-
-            const drmCert = (
-              response.elv &&
-              response.elv.media &&
-              response.elv.media.drm &&
-              response.elv.media.drm.fps &&
-              response.elv.media.drm.fps.cert
-            );
-
-            // Test prep of abr profile to determine
-            // relevant drm formats
-            const abrProfileSupport = {
-              drmAll: false,
-              drmPublic: false,
-              drmRestricted: false,
-              clear: false
-            };
-
-            if(response.abr && response.abr.default_profile) {
-              ["drm-all", "drm-public", "drm-restricted", "clear"].forEach(drmFormat => {
-                const formatSupportMap = {
-                  "drm-all": "drmAll",
-                  "drm-public": "drmPublic",
-                  "drm-restricted": "drmRestricted",
-                  "clear": "clear"
-                };
-
-                const restrictedProfile = this.RestrictAbrProfile({
-                  playbackEncryption: drmFormat,
-                  abrProfile: Object.assign(
-                    {},
-                    response.abr && response.abr.default_profile
-                  )
-                });
-
-                if(
-                  restrictedProfile.ok &&
-                  restrictedProfile.result &&
-                  Object.keys(restrictedProfile.result.playout_formats || {}).length > 0 &&
-                  Object.values(restrictedProfile.result.playout_formats).some(format => format)
-                ) {
-                  abrProfileSupport[formatSupportMap[drmFormat]] = true;
-                }
-              });
-            }
-
-            loadedLibraries[libraryId] = {
+      const libraryIds = yield this.client.ContentLibraries() || [];
+      yield Promise.all(
+        libraryIds.map(async libraryId => {
+          let response;
+          try {
+            response = (await this.client.ContentObjectMetadata({
               libraryId,
-              name: response.public && response.public.name || libraryId,
-              abr: response.abr,
-              abrProfileSupport,
-              drmCert
-            };
-          })
-        );
+              objectId: libraryId.replace(/^ilib/, "iq__"),
+              select: [
+                "public/name",
+                "abr",
+                "elv/media/drm/fps/cert"
+              ]
+            }));
+          } catch(error) {
+            // eslint-disable-next-line no-console
+            console.error(`Unable to load metadata for ${libraryId}`, error);
+          }
 
-        // eslint-disable-next-line no-unused-vars
-        const sortedArray = Object.entries(loadedLibraries).sort(([id1, obj1], [id2, obj2]) => obj1.name.localeCompare(obj2.name));
-        this.libraries = Object.fromEntries(sortedArray);
-      }
+          if(!response) { return; }
+
+          const drmCert = (
+            response.elv &&
+            response.elv.media &&
+            response.elv.media.drm &&
+            response.elv.media.drm.fps &&
+            response.elv.media.drm.fps.cert
+          );
+
+          // Test prep of abr profile to determine
+          // relevant drm formats
+          const abrProfileSupport = {
+            drmAll: false,
+            drmPublic: false,
+            drmRestricted: false,
+            clear: false
+          };
+
+          if(response.abr && response.abr.default_profile) {
+            ["drm-all", "drm-public", "drm-restricted", "clear"].forEach(drmFormat => {
+              const formatSupportMap = {
+                "drm-all": "drmAll",
+                "drm-public": "drmPublic",
+                "drm-restricted": "drmRestricted",
+                "clear": "clear"
+              };
+
+              const restrictedProfile = this.RestrictAbrProfile({
+                playbackEncryption: drmFormat,
+                abrProfile: Object.assign(
+                  {},
+                  response.abr && response.abr.default_profile
+                )
+              });
+
+              if(
+                restrictedProfile.ok &&
+                restrictedProfile.result &&
+                Object.keys(restrictedProfile.result.playout_formats || {}).length > 0 &&
+                Object.values(restrictedProfile.result.playout_formats).some(format => format)
+              ) {
+                abrProfileSupport[formatSupportMap[drmFormat]] = true;
+              }
+            });
+          }
+
+          loadedLibraries[libraryId] = {
+            libraryId,
+            name: response.public && response.public.name || libraryId,
+            abr: response.abr,
+            abrProfileSupport,
+            drmCert
+          };
+        })
+      );
+
+      // eslint-disable-next-line no-unused-vars
+      const sortedArray = Object.entries(loadedLibraries).sort(([id1, obj1], [id2, obj2]) => obj1.name.localeCompare(obj2.name));
+      this.libraries = Object.fromEntries(sortedArray);
     } catch(error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load libraries", error);
+    } finally {
+      this.librariesLoaded = true;
     }
   });
 
   LoadAccessGroups = flow(function * () {
+    if(this.accessGroups) { return; }
+
+    this.accessGroups = {};
+
     try {
-      if(!this.accessGroups) {
-        this.accessGroups = {};
-        const accessGroups = yield this.client.ListAccessGroups() || [];
-        accessGroups
-          .sort((a, b) => (a.meta.name || a.id).localeCompare(b.meta.name || b.id))
-          .map(async accessGroup => {
-            if(accessGroup.meta["name"]){
-              this.accessGroups[accessGroup.meta["name"]] = accessGroup;
-            } else {
-              this.accessGroups[accessGroup.id] = accessGroup;
-            }
-          });
-      }
+      const accessGroups = yield this.client.ListAccessGroups() || [];
+      accessGroups
+        .sort((a, b) => (a.meta.name || a.id).localeCompare(b.meta.name || b.id))
+        .map(async accessGroup => {
+          if(accessGroup.meta["name"]){
+            this.accessGroups[accessGroup.meta["name"]] = accessGroup;
+          } else {
+            this.accessGroups[accessGroup.id] = accessGroup;
+          }
+        });
     } catch(error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load access groups", error);
+    } finally {
+      this.accessGroupsLoaded = true;
     }
   });
 

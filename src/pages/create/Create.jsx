@@ -9,7 +9,6 @@ import {abrProfileClear, abrProfileBoth} from "@/utils/ABR";
 import {CircleInfoIcon, CloseIcon, ExclamationCircleIcon, UploadIcon} from "@/assets/icons";
 
 import PageContainer from "@/components/page-container/PageContainer.jsx";
-import FabricLoader from "@/components/FabricLoader";
 import styles from "./Create.module.css";
 
 import {
@@ -30,7 +29,8 @@ import {
   SimpleGrid,
   Tooltip,
   Title,
-  JsonInput
+  JsonInput,
+  Loader
 } from "@mantine/core";
 import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 import {Dropzone} from "@mantine/dropzone";
@@ -165,6 +165,10 @@ const Create = observer(() => {
     {id: "clear", value: "clear", label: "Clear", disabled: disableClear, title: "Playout Formats - HLS Clear, Dash Clear"},
     {id: "custom", value: "custom", label: "Custom", title: "Define a custom ABR profile"}
   ];
+
+  useEffect(() => {
+    ingestStore.LoadDependencies();
+  }, []);
 
   useEffect(() => {
     if(tenantStore.loaded) {
@@ -444,289 +448,310 @@ const Create = observer(() => {
 
   return (
     <PageContainer title="Create" error={error}>
-      <FabricLoader>
-        <form onSubmit={HandleSubmit} className={styles.form}>
-          <SectionTitle mb={2}>Upload New Media</SectionTitle>
-          <Radio.Group
-            name="uploadMethod"
-            value={uploadMethod}
-            onChange={value => setUploadMethod(value)}
-            mb={29}
-          >
-            <Stack mt={20} gap={18}>
-              <Radio
-                value="LOCAL"
-                label="Local File"
-                description="Select a file from your device. Ideal for quick uploads from your computer."
-              />
-              <Radio
-                value="S3"
-                label="S3 Bucket"
-                description="Choose a file from an existing S3 bucket. Ensure you have the correct permissions to access it."
-              />
-            </Stack>
-          </Radio.Group>
-          {
-            uploadMethod === "LOCAL" &&
-              <>
-                <Dropzone
-                  accept={{"audio/*": [], "video/*": [], "application/mxf": []}}
-                  id="main-dropzone"
-                  onDrop={files => setFiles(files)}
-                  onReject={fileRejections => {
-                    const fileObjects = fileRejections.map(item => (
-                      {
-                        ...item.file,
-                        errors: item.errors
-                      }
-                    ));
-                    setFiles(fileObjects);
-                  }}
-                  multiple={false}
-                  validator={(file) => {
-                    if(file.size === 0) {
-                      return {
-                        code: "size-empty",
-                        message: "This file contains no data"
-                      };
+      <form onSubmit={HandleSubmit} className={styles.form}>
+        <SectionTitle mb={2}>Upload New Media</SectionTitle>
+        <Radio.Group
+          name="uploadMethod"
+          value={uploadMethod}
+          onChange={value => setUploadMethod(value)}
+          mb={29}
+        >
+          <Stack mt={20} gap={18}>
+            <Radio
+              value="LOCAL"
+              label="Local File"
+              description="Select a file from your device. Ideal for quick uploads from your computer."
+            />
+            <Radio
+              value="S3"
+              label="S3 Bucket"
+              description="Choose a file from an existing S3 bucket. Ensure you have the correct permissions to access it."
+            />
+          </Stack>
+        </Radio.Group>
+        {
+          uploadMethod === "LOCAL" &&
+            <>
+              <Dropzone
+                accept={{"audio/*": [], "video/*": [], "application/mxf": []}}
+                id="main-dropzone"
+                onDrop={files => setFiles(files)}
+                onReject={fileRejections => {
+                  const fileObjects = fileRejections.map(item => (
+                    {
+                      ...item.file,
+                      errors: item.errors
                     }
+                  ));
+                  setFiles(fileObjects);
+                }}
+                multiple={false}
+                validator={(file) => {
+                  if(file.size === 0) {
+                    return {
+                      code: "size-empty",
+                      message: "This file contains no data"
+                    };
+                  }
 
-                    return null;
-                  }}
-                  mb={16}
-                >
-                  <Flex p="65 70" direction="column" justify="center" gap={0}>
-                    <Flex justify="center" mb={7}>
-                      <Dropzone.Accept>
-                        <UploadIcon />
-                      </Dropzone.Accept>
-                      <Dropzone.Reject>
-                        <CloseIcon
-                          style={{ width: "8rem", height: "8rem", color: "var(--mantine-color-red-6)" }}
-                          stroke={1.5}
-                        />
-                      </Dropzone.Reject>
-                      <Dropzone.Idle>
-                        <UploadIcon color="elv-neutral.4" />
-                      </Dropzone.Idle>
-                    </Flex>
-
-                    <Stack justify="center" gap={0} align="center">
-                      <Title c="elv-gray.9" order={4} mb={7}>Drag and Drop a Video or Audio File</Title>
-                      <UnstyledButton variant="transparent" p={0} size="xs" h={15}>
-                        <Text fz={14} c="elv-blue.2" fw={500}>Upload a File</Text>
-                      </UnstyledButton>
-                    </Stack>
+                  return null;
+                }}
+                mb={16}
+              >
+                <Flex p="65 70" direction="column" justify="center" gap={0}>
+                  <Flex justify="center" mb={7}>
+                    <Dropzone.Accept>
+                      <UploadIcon />
+                    </Dropzone.Accept>
+                    <Dropzone.Reject>
+                      <CloseIcon
+                        style={{ width: "8rem", height: "8rem", color: "var(--mantine-color-red-6)" }}
+                        stroke={1.5}
+                      />
+                    </Dropzone.Reject>
+                    <Dropzone.Idle>
+                      <UploadIcon color="elv-neutral.4" />
+                    </Dropzone.Idle>
                   </Flex>
-                </Dropzone>
-                {
-                  files.length > 0 &&
-                  <Text mb={8} c="elv-gray.9">Files:</Text>
-                }
-                <Flex direction="column" gap={0} mb={29}>
-                  {
-                    files.map((file, index) => (
-                      <Box
-                        key={`${file.name || file.path}-${index}`}
-                        bg={"elv-blue.0"}
-                        bd={file.errors ? "2px solid elv-red.4" : "1px solid var(--mantine-color-elv-gray-0)"}
-                        mb={16}
-                        p="9px 12px"
-                        style={{borderRadius: "6px"}}
-                      >
-                        <Stack>
-                          <Flex
-                            direction="row"
-                            align="center"
-                            justify="space-between"
-                          >
-                            <Group gap={5}>
-                              {
-                                file.errors &&
-                                <ExclamationCircleIcon color="var(--mantine-color-elv-red-4)" />
-                              }
-                              <Text c="elv-gray.9">{file.name || file.path}</Text>
-                              <Text c="elv-gray.9">- {PrettyBytes(file.size || 0)}</Text>
-                            </Group>
-                            <ActionIcon
-                              title="Remove file"
-                              size="md"
-                              variant="transparent"
-                              ml={16}
-                              onClick={() => HandleRemove({index, files, SetFilesCallback: setFiles})}
-                            >
-                              <CloseIcon />
-                            </ActionIcon>
-                          </Flex>
-                          {
-                            file.errors ?
-                              (
-                                <>
-                                  <Divider />
-                                  <Text c="elv-red.4">
-                                    { file.errors.map(item => item.message).join(", ") || "This file cannot be ingested" }
-                                  </Text>
-                                </>
-                              ) : null
-                          }
-                        </Stack>
-                      </Box>
-                    ))
-                  }
+
+                  <Stack justify="center" gap={0} align="center">
+                    <Title c="elv-gray.9" order={4} mb={7}>Drag and Drop a Video or Audio File</Title>
+                    <UnstyledButton variant="transparent" p={0} size="xs" h={15}>
+                      <Text fz={14} c="elv-blue.2" fw={500}>Upload a File</Text>
+                    </UnstyledButton>
+                  </Stack>
                 </Flex>
-              </>
-          }
-
-          {/* S3 Details */}
-          {
-            uploadMethod === "S3" && <>
+              </Dropzone>
               {
-                !s3UseAKSecret &&
-                <Textarea
-                  label="Presigned URL"
-                  name="presignedUrl"
-                  placeholder="https://example-bucket.region.amazonaws.com/path-to-media"
-                  description="Enter a presigned URL to securely access your S3 object."
-                  value={s3PresignedUrl}
-                  onChange={event => setS3PresignedUrl(event.target.value)}
-                  required={uploadMethod === "S3" && !s3UseAKSecret}
-                  mb={16}
-                />
+                files.length > 0 &&
+                <Text mb={8} c="elv-gray.9">Files:</Text>
               }
-
-              <SimpleGrid cols={2} spacing={150} mb={18}>
-                <Select
-                  label="Region"
-                  name="s3Region"
-                  data={
-                    s3Regions.map(({value, name}) => (
-                      {value, label: name}
-                    ))
-                  }
-                  placeholder="Select Region"
-                  description="Select the AWS region where your S3 bucket is hosted."
-                  onChange={value => setS3Region(value)}
-                  required={s3UseAKSecret}
-                />
-              </SimpleGrid>
-
-              <Checkbox
-                label="Use access key and secret"
-                name="s3UseAKSecret"
-                checked={s3UseAKSecret}
-                onChange={event => setS3UseAKSecret(event.target.checked)}
-                mb={18}
-              />
-
-              {
-                s3UseAKSecret &&
-                  <>
-                    <TextInput
-                      label="S3 URI"
-                      name="s3Url"
-                      value={s3Url}
-                      placeholder="s3://example-bucket/path-to-file.mp4"
-                      description="Enter a presigned URL to securely fetch your S3 object for this request."
-                      onChange={event => {
-                        setS3Url(event.target.value);
-                      }}
-                      error={s3UrlFieldError}
-                      onBlur={() => {
-                        if(ValidS3Url({value: s3Url})) {
-
-                          if(s3UrlFieldError) {
-                            setS3UrlFieldError(null);
-                          }
-                        } else {
-                          setS3UrlFieldError("Invalid S3 URI. It should begin with 's3://'. Example: 's3://example-bucket/path-to-file.mp4.'");
+              <Flex direction="column" gap={0} mb={29}>
+                {
+                  files.map((file, index) => (
+                    <Box
+                      key={`${file.name || file.path}-${index}`}
+                      bg={"elv-blue.0"}
+                      bd={file.errors ? "2px solid elv-red.4" : "1px solid var(--mantine-color-elv-gray-0)"}
+                      mb={16}
+                      p="9px 12px"
+                      style={{borderRadius: "6px"}}
+                    >
+                      <Stack>
+                        <Flex
+                          direction="row"
+                          align="center"
+                          justify="space-between"
+                        >
+                          <Group gap={5}>
+                            {
+                              file.errors &&
+                              <ExclamationCircleIcon color="var(--mantine-color-elv-red-4)" />
+                            }
+                            <Text c="elv-gray.9">{file.name || file.path}</Text>
+                            <Text c="elv-gray.9">- {PrettyBytes(file.size || 0)}</Text>
+                          </Group>
+                          <ActionIcon
+                            title="Remove file"
+                            size="md"
+                            variant="transparent"
+                            ml={16}
+                            onClick={() => HandleRemove({index, files, SetFilesCallback: setFiles})}
+                          >
+                            <CloseIcon />
+                          </ActionIcon>
+                        </Flex>
+                        {
+                          file.errors ?
+                            (
+                              <>
+                                <Divider />
+                                <Text c="elv-red.4">
+                                  { file.errors.map(item => item.message).join(", ") || "This file cannot be ingested" }
+                                </Text>
+                              </>
+                            ) : null
                         }
-                      }}
-                      required={uploadMethod === "S3"}
-                      mb={18}
-                    />
-                    <TextInput
-                      label="Access key"
-                      name="s3AccessKey"
-                      placeholder="Enter your AWS access key"
-                      description="Provide your AWS access key for authentication."
-                      value={s3AccessKey}
-                      onChange={event => setS3AccessKey(event.target.value)}
-                      type="password"
-                      required={uploadMethod === "S3"}
-                      mb={18}
-                    />
-
-                    <TextInput
-                      label="Secret"
-                      name="s3Secret"
-                      value={s3Secret}
-                      placeholder="Enter your AWS secret key"
-                      description="Enter the AWS secret key to sign this request securely."
-                      onChange={event => setS3Secret(event.target.value)}
-                      type="password"
-                      required={uploadMethod === "S3"}
-                      mb={18}
-                    />
-                  </>
-              }
-
-              <Checkbox
-                label="Copy file onto the fabric"
-                name="s3Copy"
-                checked={s3Copy}
-                onChange={event => setS3Copy(event.target.checked)}
-                mb={29}
-              />
-            </>
-          }
-
-          <Divider mb={29} />
-          <SectionTitle mb={10}>General</SectionTitle>
-
-          <SimpleGrid cols={2} spacing={150} mb={18}>
-            <TextInput
-              label="Name"
-              name="name"
-              placeholder="Enter content name"
-              onChange={event => setName(event.target.value)}
-              onBlur={() => {
-                if(ValidName({value: name})) {
-                  if(nameFieldError) {
-                    setNameFieldError(null);
-                  }
-                } else {
-                  setNameFieldError("Name must be at least 3 characters long.");
+                      </Stack>
+                    </Box>
+                  ))
                 }
-              }}
-              error={nameFieldError}
-              value={name}
-              required
-            />
-            <TextInput
-              label="Display Title"
-              name="displayTitle"
-              placeholder="Enter a title"
-              onChange={event => setDisplayTitle(event.target.value)}
-              value={displayTitle}
-            />
-          </SimpleGrid>
+              </Flex>
+            </>
+        }
 
+        {/* S3 Details */}
+        {
+          uploadMethod === "S3" && <>
+            {
+              !s3UseAKSecret &&
+              <Textarea
+                label="Presigned URL"
+                name="presignedUrl"
+                placeholder="https://example-bucket.region.amazonaws.com/path-to-media"
+                description="Enter a presigned URL to securely access your S3 object."
+                value={s3PresignedUrl}
+                onChange={event => setS3PresignedUrl(event.target.value)}
+                required={uploadMethod === "S3" && !s3UseAKSecret}
+                mb={16}
+              />
+            }
+
+            <SimpleGrid cols={2} spacing={150} mb={18}>
+              <Select
+                label="Region"
+                name="s3Region"
+                data={
+                  s3Regions.map(({value, name}) => (
+                    {value, label: name}
+                  ))
+                }
+                placeholder="Select Region"
+                description="Select the AWS region where your S3 bucket is hosted."
+                onChange={value => setS3Region(value)}
+                required={s3UseAKSecret}
+              />
+            </SimpleGrid>
+
+            <Checkbox
+              label="Use access key and secret"
+              name="s3UseAKSecret"
+              checked={s3UseAKSecret}
+              onChange={event => setS3UseAKSecret(event.target.checked)}
+              mb={18}
+            />
+
+            {
+              s3UseAKSecret &&
+                <>
+                  <TextInput
+                    label="S3 URI"
+                    name="s3Url"
+                    value={s3Url}
+                    placeholder="s3://example-bucket/path-to-file.mp4"
+                    description="Enter a presigned URL to securely fetch your S3 object for this request."
+                    onChange={event => {
+                      setS3Url(event.target.value);
+                    }}
+                    error={s3UrlFieldError}
+                    onBlur={() => {
+                      if(ValidS3Url({value: s3Url})) {
+
+                        if(s3UrlFieldError) {
+                          setS3UrlFieldError(null);
+                        }
+                      } else {
+                        setS3UrlFieldError("Invalid S3 URI. It should begin with 's3://'. Example: 's3://example-bucket/path-to-file.mp4.'");
+                      }
+                    }}
+                    required={uploadMethod === "S3"}
+                    mb={18}
+                  />
+                  <TextInput
+                    label="Access key"
+                    name="s3AccessKey"
+                    placeholder="Enter your AWS access key"
+                    description="Provide your AWS access key for authentication."
+                    value={s3AccessKey}
+                    onChange={event => setS3AccessKey(event.target.value)}
+                    type="password"
+                    required={uploadMethod === "S3"}
+                    mb={18}
+                  />
+
+                  <TextInput
+                    label="Secret"
+                    name="s3Secret"
+                    value={s3Secret}
+                    placeholder="Enter your AWS secret key"
+                    description="Enter the AWS secret key to sign this request securely."
+                    onChange={event => setS3Secret(event.target.value)}
+                    type="password"
+                    required={uploadMethod === "S3"}
+                    mb={18}
+                  />
+                </>
+            }
+
+            <Checkbox
+              label="Copy file onto the fabric"
+              name="s3Copy"
+              checked={s3Copy}
+              onChange={event => setS3Copy(event.target.checked)}
+              mb={29}
+            />
+          </>
+        }
+
+        <Divider mb={29} />
+        <SectionTitle mb={10}>General</SectionTitle>
+
+        <SimpleGrid cols={2} spacing={150} mb={18}>
           <TextInput
-            label="Description"
-            name="description"
-            placeholder="Enter a description"
-            description="Enter a description to provide more details and context."
-            onChange={event => setDescription(event.target.value)}
-            value={description}
-            mb={18}
+            label="Name"
+            name="name"
+            placeholder="Enter content name"
+            onChange={event => setName(event.target.value)}
+            onBlur={() => {
+              if(ValidName({value: name})) {
+                if(nameFieldError) {
+                  setNameFieldError(null);
+                }
+              } else {
+                setNameFieldError("Name must be at least 3 characters long.");
+              }
+            }}
+            error={nameFieldError}
+            value={name}
+            required
           />
+          <TextInput
+            label="Display Title"
+            name="displayTitle"
+            placeholder="Enter a title"
+            onChange={event => setDisplayTitle(event.target.value)}
+            value={displayTitle}
+          />
+        </SimpleGrid>
 
-          <SimpleGrid cols={2} spacing={150} mb={18}>
+        <TextInput
+          label="Description"
+          name="description"
+          placeholder="Enter a description"
+          description="Enter a description to provide more details and context."
+          onChange={event => setDescription(event.target.value)}
+          value={description}
+          mb={18}
+        />
+
+        <SimpleGrid cols={2} spacing={150} mb={18}>
+          <Select
+            label={useMasterAsMez ? "Library" : "Master Library"}
+            description={useMasterAsMez ? "Select the library where your master and mezzanine object will be stored." : "Select the library where your master object will be stored."}
+            name="masterLibrary"
+            required={true}
+            disabled={!ingestStore.librariesLoaded}
+            rightSection={!ingestStore.librariesLoaded ? <Loader size={16} /> : undefined}
+            data={
+              Object.keys(ingestStore.libraries || {}).map(libraryId => (
+                {
+                  label: ingestStore.libraries[libraryId].name || "",
+                  value: libraryId
+                }
+              ))
+            }
+            placeholder={ingestStore.librariesLoaded ? "Select Library" : "Loading libraries..."}
+            onChange={value => setMasterLibrary(value)}
+          />
+          {
+            !useMasterAsMez &&
             <Select
-              label={useMasterAsMez ? "Library" : "Master Library"}
-              description={useMasterAsMez ? "Select the library where your master and mezzanine object will be stored." : "Select the library where your master object will be stored."}
-              name="masterLibrary"
+              label="Mezzanine Library"
+              description="This is the library where your mezzanine object will be created."
+              name="mezLibrary"
               required={true}
+              disabled={!ingestStore.librariesLoaded}
+              rightSection={!ingestStore.librariesLoaded ? <Loader size={16} /> : undefined}
               data={
                 Object.keys(ingestStore.libraries || {}).map(libraryId => (
                   {
@@ -735,145 +760,130 @@ const Create = observer(() => {
                   }
                 ))
               }
-              placeholder="Select Library"
-              onChange={value => setMasterLibrary(value)}
-            />
-            {
-              !useMasterAsMez &&
-              <Select
-                label="Mezzanine Library"
-                description="This is the library where your mezzanine object will be created."
-                name="mezLibrary"
-                required={true}
-                data={
-                  Object.keys(ingestStore.libraries || {}).map(libraryId => (
-                    {
-                      label: ingestStore.libraries[libraryId].name || "",
-                      value: libraryId
-                    }
-                  ))
-                }
-                placeholder="Select Library"
-                onChange={value => setMezLibrary(value)}
-                value={mezLibrary}
-              />
-            }
-          </SimpleGrid>
-          <Checkbox
-            label="Use Master Object as Mezzanine Object"
-            checked={useMasterAsMez}
-            onChange={event => {
-              setMezLibrary(masterLibrary);
-              setUseMasterAsMez(event.target.checked);
-            }}
-            name="masterAsMez"
-            mb={18}
-          />
-
-          <SimpleGrid cols={2} spacing={150} mb={29}>
-            <Select
-              label="Mezzanine Content Type"
-              description="Select a content type for the mezzanine object."
-              name="mezContentType"
-              required={true}
-              data={Object.keys(ingestStore.contentTypes || {}).map(typeId => (
-                {value: typeId, label: ingestStore.contentTypes[typeId].name}
-              ))}
-              placeholder="Select Content Type"
-              value={mezContentType}
-              onChange={value => setMezContentType(value)}
-            />
-          </SimpleGrid>
-
-          <Divider mb={29} />
-          <SectionTitle mb={10}>Access</SectionTitle>
-
-          <SimpleGrid cols={2} spacing={150} mb={29}>
-            <Select
-              label="Access Group"
-              description="The Access Group that will manage your master object."
-              name="accessGroup"
-              data={
-                Object.keys(ingestStore.accessGroups || {}).map(groupName => (
-                  {value: groupName, label: groupName}
-                ))
-              }
-              placeholder="Select Access Group"
-              value={accessGroup}
-              onChange={(value) => setAccessGroup(value)}
-              allowDeselect={false}
-            />
-            <Permissions permission={permission} setPermission={setPermission} />
-          </SimpleGrid>
-
-          <Divider mb={29} />
-          <SectionTitle mb={10}>Playback & Streaming</SectionTitle>
-
-          <SimpleGrid cols={2} spacing={150} mb={10}>
-            <Select
-              description="Select a playback encryption option. Enable Clear or Digital Rights Management (DRM) copy protection during playback."
-              name="encryption"
-              data={ENCRYPTION_OPTIONS}
-              placeholder="Select Encryption"
-              mb={16}
-              value={playbackEncryption}
-              onChange={value => setPlaybackEncryption(value)}
-              required
-              label={
-                <Flex align="center" gap={6}>
-                  Playback Encryption
-                  <Tooltip
-                    multiline
-                    w={460}
-                    label={
-                      ENCRYPTION_OPTIONS.map(({label, title, id}) =>
-                        <Flex
-                          key={`encryption-info-${id}`}
-                          gap="1rem"
-                          lh={1.25}
-                          pb={5}
-                        >
-                          <Flex flex="0 0 35%">{label}:</Flex>
-                          <Text fz="sm">{title}</Text>
-                        </Flex>
-                      )
-                    }
-                  >
-                    <Flex w={16}>
-                      <CircleInfoIcon color="var(--mantine-color-elv-gray-8)"/>
-                    </Flex>
-                  </Tooltip>
-                </Flex>
-              }
-            />
-          </SimpleGrid>
-
-          {
-            playbackEncryption === "custom" &&
-            <JsonInput
-              name="abrProfile"
-              label="ABR Profile Metadata"
-              value={abrProfile}
-              onChange={value => setAbrProfile(value)}
-              required={playbackEncryption === "custom"}
-              defaultValue={{default_profile: {}}}
-              validationError="Invalid JSON"
-              autosize
-              minRows={6}
-              maxRows={10}
-              formatOnBlur
+              placeholder={ingestStore.librariesLoaded ? "Select Library" : "Loading libraries..."}
+              onChange={value => setMezLibrary(value)}
+              value={mezLibrary}
             />
           }
+        </SimpleGrid>
+        <Checkbox
+          label="Use Master Object as Mezzanine Object"
+          checked={useMasterAsMez}
+          onChange={event => {
+            setMezLibrary(masterLibrary);
+            setUseMasterAsMez(event.target.checked);
+          }}
+          name="masterAsMez"
+          mb={18}
+        />
 
-          <Button
-            type="submit"
-            disabled={isCreating || !ValidForm()}
-            mt={25}
-          >
-            { isCreating ? "Submitting..." : "Create" }
-          </Button>
-        </form>
-      </FabricLoader>
+        <SimpleGrid cols={2} spacing={150} mb={29}>
+          <Select
+            label="Mezzanine Content Type"
+            description="Select a content type for the mezzanine object."
+            name="mezContentType"
+            required={true}
+            disabled={!ingestStore.contentTypesLoaded}
+            rightSection={!ingestStore.contentTypesLoaded ? <Loader size={16} /> : undefined}
+            data={Object.keys(ingestStore.contentTypes || {}).map(typeId => (
+              {value: typeId, label: ingestStore.contentTypes[typeId].name}
+            ))}
+            placeholder={ingestStore.contentTypesLoaded ? "Select Content Type" : "Loading content types..."}
+            value={mezContentType}
+            onChange={value => setMezContentType(value)}
+          />
+        </SimpleGrid>
+
+        <Divider mb={29} />
+        <SectionTitle mb={10}>Access</SectionTitle>
+
+        <SimpleGrid cols={2} spacing={150} mb={29}>
+          <Select
+            label="Access Group"
+            description="The Access Group that will manage your master object."
+            name="accessGroup"
+            disabled={!ingestStore.accessGroupsLoaded}
+            rightSection={!ingestStore.accessGroupsLoaded ? <Loader size={16} /> : undefined}
+            data={
+              Object.keys(ingestStore.accessGroups || {}).map(groupName => (
+                {value: groupName, label: groupName}
+              ))
+            }
+            placeholder={ingestStore.accessGroupsLoaded ? "Select Access Group" : "Loading access groups..."}
+            value={accessGroup}
+            onChange={(value) => setAccessGroup(value)}
+            allowDeselect={false}
+          />
+          <Permissions permission={permission} setPermission={setPermission} />
+        </SimpleGrid>
+
+        <Divider mb={29} />
+        <SectionTitle mb={10}>Playback & Streaming</SectionTitle>
+
+        <SimpleGrid cols={2} spacing={150} mb={10}>
+          <Select
+            description="Select a playback encryption option. Enable Clear or Digital Rights Management (DRM) copy protection during playback."
+            name="encryption"
+            data={ENCRYPTION_OPTIONS}
+            placeholder="Select Encryption"
+            mb={16}
+            value={playbackEncryption}
+            onChange={value => setPlaybackEncryption(value)}
+            required
+            label={
+              <Flex align="center" gap={6}>
+                Playback Encryption
+                <Tooltip
+                  multiline
+                  w={460}
+                  label={
+                    ENCRYPTION_OPTIONS.map(({label, title, id}) =>
+                      <Flex
+                        key={`encryption-info-${id}`}
+                        gap="1rem"
+                        lh={1.25}
+                        pb={5}
+                      >
+                        <Flex flex="0 0 35%">{label}:</Flex>
+                        <Text fz="sm">{title}</Text>
+                      </Flex>
+                    )
+                  }
+                >
+                  <Flex w={16}>
+                    <CircleInfoIcon color="var(--mantine-color-elv-gray-8)"/>
+                  </Flex>
+                </Tooltip>
+              </Flex>
+            }
+          />
+        </SimpleGrid>
+
+        {
+          playbackEncryption === "custom" &&
+          <JsonInput
+            name="abrProfile"
+            label="ABR Profile Metadata"
+            value={abrProfile}
+            onChange={value => setAbrProfile(value)}
+            required={playbackEncryption === "custom"}
+            defaultValue={{default_profile: {}}}
+            validationError="Invalid JSON"
+            autosize
+            minRows={6}
+            maxRows={10}
+            formatOnBlur
+          />
+        }
+
+        <Button
+          type="submit"
+          disabled={isCreating || !ValidForm()}
+          mt={25}
+        >
+          { isCreating ? "Submitting..." : "Create" }
+        </Button>
+      </form>
     </PageContainer>
   );
 });
