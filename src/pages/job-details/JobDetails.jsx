@@ -96,9 +96,16 @@ const JobDetails = observer(() => {
   }, []);
 
   const HandleIngest = async () => {
-    if(ingestStore.job.currentStep !== "create" || ingestStore.job.create.runState !== "finished") { return; }
+    const job = ingestStore.job;
 
-    await ingestStore.RunIngestPipeline({jobId});
+    if(job.currentStep === "create" && job.create.runState === "finished") {
+      await ingestStore.RunIngestPipeline({jobId});
+    } else if(job.currentStep === "upload" && !["finished", "failed", "canceled"].includes(job.upload.runState)) {
+      // A page reload kills the in-memory abort controller and any in-flight upload, but leaves
+      // the job's currentStep/runState looking like it's still uploading. Reconnect a live upload
+      // so there's actually something for the cancel button to abort.
+      await ingestStore.RunIngestPipeline({jobId, resume: true});
+    }
   };
 
   if(!ingestStore.job) { return <Loader />; }
