@@ -265,6 +265,8 @@ class IngestStore {
 
     if(!response) { return; }
 
+    const fileInfo = files ? yield FileInfo("", files) : undefined;
+
     yield this.CreateABRMezzanine({
       libraryId: mezFormData.libraryId,
       masterObjectId: response.id,
@@ -280,7 +282,8 @@ class IngestStore {
       newObject: mezFormData.newObject,
       access: JSON.parse(access),
       permission: mezFormData.permission,
-      jobId: response.jobId
+      jobId: response.jobId,
+      fileInfo
     });
   });
 
@@ -1041,6 +1044,7 @@ class IngestStore {
     offeringKey="default",
     access=[],
     permission,
+    fileInfo,
     jobId
   }) {
     let createResponse;
@@ -1245,7 +1249,10 @@ class IngestStore {
             libraryId,
             objectId,
             masterObjectId: jobIdRef,
-            writeToken
+            writeToken,
+            s3: access.length > 0,
+            newObject,
+            fileInfo
           });
 
           if(accessGroupAddress) {
@@ -1327,7 +1334,10 @@ class IngestStore {
     libraryId,
     objectId,
     masterObjectId,
-    writeToken
+    writeToken,
+    s3,
+    newObject,
+    fileInfo
   }) {
     this.UpdateIngestObject({
       id: masterObjectId,
@@ -1343,6 +1353,15 @@ class IngestStore {
         objectId,
         writeToken
       });
+
+      if(!s3 && !newObject) {
+        yield this.client.DeleteFiles({
+          libraryId,
+          objectId,
+          writeToken,
+          filePaths: fileInfo.map(f => f.path)
+        })
+      }
 
       const finalizeAbrResponse = yield this.client.FinalizeContentObject({
         libraryId,
