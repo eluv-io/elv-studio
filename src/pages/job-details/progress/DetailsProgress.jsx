@@ -3,9 +3,9 @@ import {ActionIcon, Box, Group, Loader, SimpleGrid, Text, Tooltip} from "@mantin
 import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 import TextCard from "@/components/text-card/TextCard.jsx";
 import {ingestStore} from "@/stores/index.js";
-import {CheckmarkIcon, CloseIcon} from "@/assets/icons/index.jsx";
+import {CheckmarkIcon} from "@/assets/icons/index.jsx";
 import styles from "./DetailsProgress.module.css";
-import {IconRefresh} from "@tabler/icons-react";
+import {IconPlayerPlay, IconPlayerStop} from "@tabler/icons-react";
 
 const DetailsProgress = observer(({jobId}) => {
   const uploadRunState = ingestStore.jobs[jobId].upload.runState;
@@ -33,10 +33,10 @@ const DetailsProgress = observer(({jobId}) => {
                   <ActionIcon
                     variant="transparent"
                     c="elv-gray.8"
-                    size={20}
+                    size={22}
                     onClick={() => ingestStore.RunIngestPipeline({jobId, resume: true})}
                   >
-                    <IconRefresh size={20} />
+                    <IconPlayerPlay size={22} />
                   </ActionIcon>
                 </Tooltip>
               </Group> :
@@ -45,16 +45,16 @@ const DetailsProgress = observer(({jobId}) => {
                 <Group>
                   <Loader size={20} />
                   <Tooltip
-                    label="Cancel upload"
+                    label="Stop Upload"
                     position="bottom"
                   >
                     <ActionIcon
                       variant="transparent"
                       c="elv-gray.8"
-                      size={20}
+                      size={22}
                       onClick={() => ingestStore.CancelUpload({jobId})}
                     >
-                      <CloseIcon width={16} height={16} />
+                      <IconPlayerStop size={22} />
                     </ActionIcon>
                   </Tooltip>
                 </Group>
