@@ -823,7 +823,8 @@ class IngestStore {
         upload: {
           ...this.jobs[masterObjectId].upload,
           complete: true,
-          runState: "finished"
+          runState: "finished",
+          percentage: 100
         },
         currentStep: "ingest"
       }
