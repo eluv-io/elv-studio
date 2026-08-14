@@ -133,12 +133,10 @@ const Create = observer(() => {
   const [description, setDescription] = useState("");
   const [permission, setPermission] = useState("editable");
 
-  const [mezLibrary, setMezLibrary] = useState("");
   const [mezContentType, setMezContentType] = useState("");
 
   const [displayTitle, setDisplayTitle] = useState("");
   const [playbackEncryption, setPlaybackEncryption] = useState("");
-  const [useMasterAsMez, setUseMasterAsMez] = useState(true);
 
   const [hasDrmCert, setHasDrmCert] = useState(false);
   const [disableDrmAll, setDisableDrmAll] = useState(true);
@@ -196,19 +194,9 @@ const Create = observer(() => {
     if(!ingestStore.libraries || !ingestStore.GetLibrary(masterLibrary)) { return; }
 
     SetPlaybackSettings({
-      libraryId: masterLibrary,
-      type: "MASTER"
+      libraryId: masterLibrary
     });
   }, [masterLibrary]);
-
-  useEffect(() => {
-    if(!ingestStore.libraries || !ingestStore.GetLibrary(mezLibrary)) { return; }
-
-    SetPlaybackSettings({
-      libraryId: mezLibrary,
-      type: "MEZ"
-    });
-  }, [mezLibrary]);
 
   useEffect(() => {
     if(permission === "owner") {
@@ -216,17 +204,12 @@ const Create = observer(() => {
       setDisableDrmPublic(true);
       setDisableDrmRestricted(true);
     } else {
-      if(
-        !ingestStore.libraries ||
-        (!ingestStore.GetLibrary(mezLibrary) &&
-        !ingestStore.GetLibrary(masterLibrary))
-      ) {
+      if(!ingestStore.libraries || !ingestStore.GetLibrary(masterLibrary)) {
         return;
       }
 
       SetPlaybackSettings({
-        libraryId: mezLibrary || masterLibrary,
-        type: mezLibrary ? "MEZ" : "MASTER",
+        libraryId: masterLibrary,
         resetEncryption: false
       });
     }
@@ -266,42 +249,39 @@ const Create = observer(() => {
 
   const SetPlaybackSettings = ({
     libraryId,
-    type,
     resetEncryption=true
   }) => {
     const library = ingestStore.GetLibrary(libraryId);
     const libraryHasCert = !!library.drmCert;
     setHasDrmCert(libraryHasCert);
 
-    if(type === "MASTER" && useMasterAsMez || type === "MEZ") {
-      const profile = library.abr && library.abr.default_profile;
+    const profile = library.abr && library.abr.default_profile;
 
-      SetMezContentType({
-        type: library.abr && library.abr.mez_content_type || ""
+    SetMezContentType({
+      type: library.abr && library.abr.mez_content_type || ""
+    });
+
+    if(!profile || Object.keys(profile).length === 0) {
+      SetAbrProfile({
+        profile: {default_profile: libraryHasCert ? abrProfileBoth : abrProfileClear},
+        stringify: true
       });
 
-      if(!profile || Object.keys(profile).length === 0) {
-        SetAbrProfile({
-          profile: {default_profile: libraryHasCert ? abrProfileBoth : abrProfileClear},
-          stringify: true
-        });
+      setDisableDrmAll(!libraryHasCert || permission === "owner");
+      setDisableDrmPublic(!libraryHasCert || permission === "owner");
+      setDisableDrmRestricted(!libraryHasCert || permission === "owner");
+      setDisableClear(false);
+    } else {
+      SetAbrProfile({profile: library.abr, stringify: true});
 
-        setDisableDrmAll(!libraryHasCert || permission === "owner");
-        setDisableDrmPublic(!libraryHasCert || permission === "owner");
-        setDisableDrmRestricted(!libraryHasCert || permission === "owner");
-        setDisableClear(false);
-      } else {
-        SetAbrProfile({profile: library.abr, stringify: true});
+      setDisableClear(!library.abrProfileSupport.clear);
+      setDisableDrmAll(!libraryHasCert || !library.abrProfileSupport.drmAll || permission === "owner");
+      setDisableDrmPublic(!libraryHasCert || !library.abrProfileSupport.drmPublic || permission === "owner");
+      setDisableDrmRestricted(!libraryHasCert || !library.abrProfileSupport.drmRestricted || permission === "owner");
+    }
 
-        setDisableClear(!library.abrProfileSupport.clear);
-        setDisableDrmAll(!libraryHasCert || !library.abrProfileSupport.drmAll || permission === "owner");
-        setDisableDrmPublic(!libraryHasCert || !library.abrProfileSupport.drmPublic || permission === "owner");
-        setDisableDrmRestricted(!libraryHasCert || !library.abrProfileSupport.drmRestricted || permission === "owner");
-      }
-
-      if(resetEncryption) {
-        setPlaybackEncryption(null);
-      }
+    if(resetEncryption) {
+      setPlaybackEncryption(null);
     }
   };
 
@@ -416,12 +396,12 @@ const Create = observer(() => {
             abr: abrMetadata
           },
           mez: {
-            libraryId: useMasterAsMez ? masterLibrary : mezLibrary,
+            libraryId: masterLibrary,
             accessGroup: accessGroupAddress,
             name: name,
             description: description,
             displayTitle,
-            newObject: !useMasterAsMez,
+            newObject: false,
             permission: permission
           }
         }
@@ -726,8 +706,8 @@ const Create = observer(() => {
 
         <SimpleGrid cols={2} spacing={150} mb={18}>
           <Select
-            label={useMasterAsMez ? "Library" : "Master Library"}
-            description={useMasterAsMez ? "Select the library where your master and mezzanine object will be stored." : "Select the library where your master object will be stored."}
+            label="Library"
+            description="Select the library where your master and mezzanine object will be stored."
             name="masterLibrary"
             required={true}
             disabled={!ingestStore.librariesLoaded}
@@ -743,39 +723,7 @@ const Create = observer(() => {
             placeholder={ingestStore.librariesLoaded ? "Select Library" : "Loading libraries..."}
             onChange={value => setMasterLibrary(value)}
           />
-          {
-            !useMasterAsMez &&
-            <Select
-              label="Mezzanine Library"
-              description="This is the library where your mezzanine object will be created."
-              name="mezLibrary"
-              required={true}
-              disabled={!ingestStore.librariesLoaded}
-              rightSection={!ingestStore.librariesLoaded ? <Loader size={16} /> : undefined}
-              data={
-                Object.keys(ingestStore.libraries || {}).map(libraryId => (
-                  {
-                    label: ingestStore.libraries[libraryId].name || "",
-                    value: libraryId
-                  }
-                ))
-              }
-              placeholder={ingestStore.librariesLoaded ? "Select Library" : "Loading libraries..."}
-              onChange={value => setMezLibrary(value)}
-              value={mezLibrary}
-            />
-          }
         </SimpleGrid>
-        <Checkbox
-          label="Use Master Object as Mezzanine Object"
-          checked={useMasterAsMez}
-          onChange={event => {
-            setMezLibrary(masterLibrary);
-            setUseMasterAsMez(event.target.checked);
-          }}
-          name="masterAsMez"
-          mb={18}
-        />
 
         <SimpleGrid cols={2} spacing={150} mb={29}>
           <Select
