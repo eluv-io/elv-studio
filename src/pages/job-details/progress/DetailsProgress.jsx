@@ -27,7 +27,7 @@ const DetailsProgress = observer(({jobId}) => {
                   { uploadRunState === "failed" ? "Failed" : "Canceled" }
                 </Text>
                 <Tooltip
-                  label="Retry upload"
+                  label="Resume Upload"
                   position="bottom"
                 >
                   <ActionIcon
