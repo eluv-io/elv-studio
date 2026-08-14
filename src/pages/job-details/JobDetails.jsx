@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useNavigate, useParams} from "react-router";
 import {observer} from "mobx-react-lite";
 
@@ -88,9 +88,16 @@ const JobDetails = observer(() => {
   const params = useParams();
   const jobId = params.id;
   const navigate = useNavigate();
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
     ingestStore.SetJob(jobId);
+
+    // StrictMode double-invokes mount effects in dev; HandleIngest is async and mutates job
+    // state as it progresses, so a second invocation can see mid-flight state and kick off a
+    // concurrent, incorrectly-resumed pipeline run. Only let it actually start once per mount.
+    if(hasStartedRef.current) { return; }
+    hasStartedRef.current = true;
 
     HandleIngest();
   }, []);
