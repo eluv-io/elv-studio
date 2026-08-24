@@ -1,5 +1,5 @@
 import {flow, makeAutoObservable} from "mobx";
-import {ValidateLibrary} from "@eluvio/elv-client-js/src/Validation";
+import {ValidateLibrary, ValidateWriteToken} from "@eluvio/elv-client-js/src/Validation";
 import UrlJoin from "url-join";
 import {FileInfo} from "@/utils/Files";
 import Path from "path";
@@ -8,13 +8,69 @@ import ABR from "@eluvio/elv-abr-profile";
 import defaultOptions from "@eluvio/elv-lro-status/defaultOptions";
 import enhanceLROStatus from "@eluvio/elv-lro-status/enhanceLROStatus";
 
+// Some fabric nodes report LRO `duration` as a Go-formatted duration string (e.g. "0s", "1m30s")
+// instead of the nanosecond Number that @eluvio/elv-lro-status expects. Parse it back into nanoseconds.
+const ParseGoDuration = durationStr => {
+  const unitToNs = {ns: 1, "µs": 1e3, us: 1e3, ms: 1e6, s: 1e9, m: 60e9, h: 3600e9};
+  const regex = /([0-9]*\.?[0-9]+)(ns|µs|us|ms|s|m|h)/g;
+
+  let totalNs = 0;
+  let matched = false;
+  let match;
+  while((match = regex.exec(durationStr))) {
+    matched = true;
+    totalNs += parseFloat(match[1]) * unitToNs[match[2]];
+  }
+
+  return matched ? totalNs : durationStr;
+};
+
+// File/Blob objects can't survive JSON.stringify (they serialize to "{}") and can never
+// survive a page reload anyway, so strip them out rather than persisting broken placeholders.
+const StripFilesReplacer = (key, value) => key === "files" ? undefined : value;
+
+// The fabric client is a FrameClient - most calls are relayed via postMessage to a separate
+// privileged frame, where an AbortSignal can't be cloned/honored. Racing the call against the
+// signal ourselves guarantees we stop waiting the instant the user cancels, regardless of
+// whether (or how) that remote frame ever responds.
+const RaceAbort = (promise, signal) => {
+  if(!signal) { return promise; }
+
+  return new Promise((resolve, reject) => {
+    if(signal.aborted) {
+      reject(new DOMException("Upload aborted", "AbortError"));
+      return;
+    }
+
+    const OnAbort = () => reject(new DOMException("Upload aborted", "AbortError"));
+    signal.addEventListener("abort", OnAbort, {once: true});
+
+    promise.then(
+      value => { signal.removeEventListener("abort", OnAbort); resolve(value); },
+      error => { signal.removeEventListener("abort", OnAbort); reject(error); }
+    );
+  });
+};
+
+const SanitizeLROStatus = status =>
+  Object.fromEntries(
+    Object.entries(status).map(([lroId, entry]) => [
+      lroId,
+      typeof entry.duration === "string" ?
+        {...entry, duration: ParseGoDuration(entry.duration)} :
+        entry
+    ])
+  );
+
 class IngestStore {
   libraries;
+  librariesLoaded = false;
   accessGroups;
-  loaded;
+  accessGroupsLoaded = false;
   jobs;
   job;
   contentTypes;
+  contentTypesLoaded = false;
   showDialog = false;
   dialog = {
     title: "",
@@ -26,10 +82,15 @@ class IngestStore {
     makeAutoObservable(this);
 
     this.rootStore = rootStore;
+    this.abortControllers = {};
   }
 
   get client() {
     return this.rootStore.client;
+  }
+
+  get jobsStorageKey() {
+    return `elv-jobs-${this.rootStore.tenantStore.tenantId}`;
   }
 
   GetLibrary = (libraryId) => {
@@ -44,7 +105,10 @@ class IngestStore {
     this.jobs = jobs;
   }
 
-  UpdateIngestObject = ({id, data}) => {
+  // skipPersist: skip the localStorage write for this update. Used by high-frequency callers
+  // (upload progress ticks can fire many times per second) since JSON.stringify-ing the whole
+  // jobs map on every tick blocks the main thread and makes the UI feel sluggish mid-upload.
+  UpdateIngestObject = ({id, data, skipPersist=false}) => {
     if(!this.jobs) { this.jobs = {}; }
 
     if(!this.jobs[id]) {
@@ -64,10 +128,15 @@ class IngestStore {
       data
     );
 
+    if(skipPersist) {
+      this.UpdateIngestJobs({jobs: this.jobs});
+      return;
+    }
+
     try {
       localStorage.setItem(
-        "elv-jobs",
-        this.client.utils.B64(JSON.stringify(this.jobs))
+        this.jobsStorageKey,
+        this.client.utils.B64(JSON.stringify(this.jobs, StripFilesReplacer))
       );
     } catch(error) {
       let errorMessage;
@@ -105,10 +174,27 @@ class IngestStore {
 
     this.UpdateIngestJobs({jobs});
     localStorage.setItem(
-      "elv-jobs",
-      this.client.utils.B64(JSON.stringify(jobs))
+      this.jobsStorageKey,
+      this.client.utils.B64(JSON.stringify(jobs, StripFilesReplacer))
     );
   };
+
+  LoadJobs() {
+    const localStorageJobs = localStorage.getItem(this.jobsStorageKey);
+    if(localStorageJobs) {
+      const parsedJobs = JSON.parse(this.rootStore.Decode(localStorageJobs));
+
+      Object.keys(parsedJobs || {}).forEach(jobId => {
+        const item = parsedJobs[jobId];
+        item["_title"] = item.formData?.master?.title;
+        item["_objectId"] = jobId;
+      });
+
+      this.UpdateIngestJobs({jobs: parsedJobs});
+    } else {
+      this.UpdateIngestJobs({jobs: {}});
+    }
+  }
 
   ShowWarningDialog = flow(function * ({title, description}) {
     this.showDialog = true;
@@ -147,6 +233,58 @@ class IngestStore {
         yield new Promise(resolve => setTimeout(resolve, 7000));
       }
     }
+  });
+
+  // Run (or resume) the upload -> ingest -> finalize pipeline for a job, using the formData
+  // that was captured when the job was created.
+  RunIngestPipeline = flow(function * ({jobId, resume=false}) {
+    const job = this.jobs[jobId];
+    if(!job || !job.formData) { return; }
+
+    const {abr, access, copy, files, libraryId, title, accessGroup, description, s3Url, writeToken, playbackEncryption} = job.formData.master;
+    const mezFormData = job.formData.mez;
+    const {contentType} = job.formData;
+
+    const response = yield this.CreateProductionMaster({
+      libraryId,
+      files,
+      title,
+      description,
+      s3Url,
+      abr: abr ? JSON.parse(abr) : undefined,
+      accessGroupAddress: accessGroup,
+      access: JSON.parse(access),
+      copy,
+      masterObjectId: jobId,
+      writeToken,
+      playbackEncryption,
+      displayTitle: mezFormData.displayTitle,
+      finalize: mezFormData.newObject,
+      resume
+    });
+
+    if(!response) { return; }
+
+    const fileInfo = files ? yield FileInfo("", files) : undefined;
+
+    yield this.CreateABRMezzanine({
+      libraryId: mezFormData.libraryId,
+      masterObjectId: response.id,
+      masterVersionHash: response.hash,
+      masterWriteToken: (response.id || response.hash) ? undefined : writeToken,
+      writeToken: writeToken,
+      abrProfile: response.abrProfile,
+      type: contentType,
+      name: mezFormData.name,
+      accessGroupAddress: mezFormData.accessGroup,
+      description: mezFormData.description,
+      displayTitle: mezFormData.displayTitle,
+      newObject: mezFormData.newObject,
+      access: JSON.parse(access),
+      permission: mezFormData.permission,
+      jobId: response.jobId,
+      fileInfo
+    });
   });
 
   RestrictAbrProfile = ({playbackEncryption, abrProfile}) => {
@@ -195,18 +333,37 @@ class IngestStore {
     throw error;
   };
 
+  // Mark a job's current step as canceled by the user, distinct from a failure - unlike
+  // HandleError, this does not throw, so callers can tell a deliberate cancel apart from
+  // an actual error.
+  HandleCancel = ({id, step}) => {
+    this.UpdateIngestObject({
+      id,
+      data: {
+        ...this.jobs[id],
+        [step]: {
+          ...this.jobs[id][step],
+          runState: "canceled"
+        },
+        active: false
+      }
+    });
+  };
+
+  // Abort an in-progress upload for a job. The write token/draft is untouched server-side,
+  // so the job can be picked back up later via RunIngestPipeline({jobId, resume: true}).
+  CancelUpload = ({jobId}) => {
+    this.abortControllers[jobId]?.abort();
+  };
+
   ContentType = flow(function * ({name, typeId, versionHash}) {
     return yield this.client.ContentType({name, typeId, versionHash});
   });
 
   LoadDependencies = flow(function * () {
-    try {
-      yield this.LoadLibraries();
-      yield this.LoadAccessGroups();
-      yield this.LoadContentTypes();
-    } finally {
-      this.loaded = true;
-    }
+    yield this.LoadLibraries();
+    yield this.LoadAccessGroups();
+    yield this.LoadContentTypes();
   });
 
   LoadContentTypes = flow(function * () {
@@ -224,119 +381,127 @@ class IngestStore {
     } catch(error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load content types", error);
+    } finally {
+      this.contentTypesLoaded = true;
     }
   });
 
   LoadLibraries = flow(function * () {
+    if(this.libraries) { return; }
+
+    this.libraries = {};
+
     try {
-      if(!this.libraries) {
-        this.libraries = {};
-        let loadedLibraries = {};
+      let loadedLibraries = {};
 
-        const libraryIds = yield this.client.ContentLibraries() || [];
-        yield Promise.all(
-          libraryIds.map(async libraryId => {
-            let response;
-            try {
-              response = (await this.client.ContentObjectMetadata({
-                libraryId,
-                objectId: libraryId.replace(/^ilib/, "iq__"),
-                select: [
-                  "public/name",
-                  "abr",
-                  "elv/media/drm/fps/cert"
-                ]
-              }));
-            } catch(error) {
-              // eslint-disable-next-line no-console
-              console.error(`Unable to load metadata for ${libraryId}`, error);
-            }
-
-            if(!response) { return; }
-
-            const drmCert = (
-              response.elv &&
-              response.elv.media &&
-              response.elv.media.drm &&
-              response.elv.media.drm.fps &&
-              response.elv.media.drm.fps.cert
-            );
-
-            // Test prep of abr profile to determine
-            // relevant drm formats
-            const abrProfileSupport = {
-              drmAll: false,
-              drmPublic: false,
-              drmRestricted: false,
-              clear: false
-            };
-
-            if(response.abr && response.abr.default_profile) {
-              ["drm-all", "drm-public", "drm-restricted", "clear"].forEach(drmFormat => {
-                const formatSupportMap = {
-                  "drm-all": "drmAll",
-                  "drm-public": "drmPublic",
-                  "drm-restricted": "drmRestricted",
-                  "clear": "clear"
-                };
-
-                const restrictedProfile = this.RestrictAbrProfile({
-                  playbackEncryption: drmFormat,
-                  abrProfile: Object.assign(
-                    {},
-                    response.abr && response.abr.default_profile
-                  )
-                });
-
-                if(
-                  restrictedProfile.ok &&
-                  restrictedProfile.result &&
-                  Object.keys(restrictedProfile.result.playout_formats || {}).length > 0 &&
-                  Object.values(restrictedProfile.result.playout_formats).some(format => format)
-                ) {
-                  abrProfileSupport[formatSupportMap[drmFormat]] = true;
-                }
-              });
-            }
-
-            loadedLibraries[libraryId] = {
+      const libraryIds = yield this.client.ContentLibraries() || [];
+      yield Promise.all(
+        libraryIds.map(async libraryId => {
+          let response;
+          try {
+            response = (await this.client.ContentObjectMetadata({
               libraryId,
-              name: response.public && response.public.name || libraryId,
-              abr: response.abr,
-              abrProfileSupport,
-              drmCert
-            };
-          })
-        );
+              objectId: libraryId.replace(/^ilib/, "iq__"),
+              select: [
+                "public/name",
+                "abr",
+                "elv/media/drm/fps/cert"
+              ]
+            }));
+          } catch(error) {
+            // eslint-disable-next-line no-console
+            console.error(`Unable to load metadata for ${libraryId}`, error);
+          }
 
-        // eslint-disable-next-line no-unused-vars
-        const sortedArray = Object.entries(loadedLibraries).sort(([id1, obj1], [id2, obj2]) => obj1.name.localeCompare(obj2.name));
-        this.libraries = Object.fromEntries(sortedArray);
-      }
+          if(!response) { return; }
+
+          const drmCert = (
+            response.elv &&
+            response.elv.media &&
+            response.elv.media.drm &&
+            response.elv.media.drm.fps &&
+            response.elv.media.drm.fps.cert
+          );
+
+          // Test prep of abr profile to determine
+          // relevant drm formats
+          const abrProfileSupport = {
+            drmAll: false,
+            drmPublic: false,
+            drmRestricted: false,
+            clear: false
+          };
+
+          if(response.abr && response.abr.default_profile) {
+            ["drm-all", "drm-public", "drm-restricted", "clear"].forEach(drmFormat => {
+              const formatSupportMap = {
+                "drm-all": "drmAll",
+                "drm-public": "drmPublic",
+                "drm-restricted": "drmRestricted",
+                "clear": "clear"
+              };
+
+              const restrictedProfile = this.RestrictAbrProfile({
+                playbackEncryption: drmFormat,
+                abrProfile: Object.assign(
+                  {},
+                  response.abr && response.abr.default_profile
+                )
+              });
+
+              if(
+                restrictedProfile.ok &&
+                restrictedProfile.result &&
+                Object.keys(restrictedProfile.result.playout_formats || {}).length > 0 &&
+                Object.values(restrictedProfile.result.playout_formats).some(format => format)
+              ) {
+                abrProfileSupport[formatSupportMap[drmFormat]] = true;
+              }
+            });
+          }
+
+          loadedLibraries[libraryId] = {
+            libraryId,
+            name: response.public && response.public.name || libraryId,
+            abr: response.abr,
+            abrProfileSupport,
+            drmCert
+          };
+        })
+      );
+
+      // eslint-disable-next-line no-unused-vars
+      const sortedArray = Object.entries(loadedLibraries).sort(([id1, obj1], [id2, obj2]) => obj1.name.localeCompare(obj2.name));
+      this.libraries = Object.fromEntries(sortedArray);
     } catch(error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load libraries", error);
+    } finally {
+      this.librariesLoaded = true;
     }
   });
 
   LoadAccessGroups = flow(function * () {
+    if(this.accessGroups) { return; }
+
+    this.accessGroups = {};
+
     try {
-      if(!this.accessGroups) {
-        this.accessGroups = {};
-        const accessGroups = yield this.client.ListAccessGroups() || [];
-        accessGroups
-          .sort((a, b) => (a.meta.name || a.id).localeCompare(b.meta.name || b.id))
-          .map(async accessGroup => {
-            if(accessGroup.meta["name"]){
-              this.accessGroups[accessGroup.meta["name"]] = accessGroup;
-            } else {
-              this.accessGroups[accessGroup.id] = accessGroup;
-            }
-          });
-      }
+      const accessGroups = yield this.client.ListAccessGroups() || [];
+      accessGroups
+        .sort((a, b) => (a.meta.name || a.id).localeCompare(b.meta.name || b.id))
+        .map(async accessGroup => {
+          if(accessGroup.meta["name"]){
+            this.accessGroups[accessGroup.meta["name"]] = accessGroup;
+          } else {
+            this.accessGroups[accessGroup.id] = accessGroup;
+          }
+        });
     } catch(error) {
       // eslint-disable-next-line no-console
       console.error("Failed to load access groups", error);
+    } finally {
+      this.accessGroupsLoaded = true;
     }
   });
 
@@ -380,7 +545,11 @@ class IngestStore {
     }
   });
 
-  CreateContentObject = flow(function * ({libraryId, mezContentType, formData}) {
+  CreateContentObject = flow(function * ({
+    libraryId,
+    mezContentType,
+    formData
+  }) {
     let createResponse;
     let totalFileSize;
     try {
@@ -403,7 +572,7 @@ class IngestStore {
         });
 
         formData.contentType = mezContentType;
-        formData.master.writeToken = createResponse.write_token;
+        formData.master.writeToken = createResponse.writeToken;
 
         this.UpdateIngestObject({
           id: createResponse.id,
@@ -417,9 +586,11 @@ class IngestStore {
             size: totalFileSize,
             masterLibraryId: libraryId,
             masterObjectId: createResponse.id,
-            masterWriteToken: createResponse.write_token,
+            masterWriteToken: createResponse.writeToken,
             masterNodeUrl: createResponse.nodeUrl,
-            contentType: mezContentType
+            contentType: mezContentType,
+            _title: formData.master.title,
+            _objectId: createResponse.id
           }
         });
 
@@ -448,27 +619,60 @@ class IngestStore {
     access=[],
     copy,
     masterObjectId,
-    writeToken
+    writeToken,
+    finalize=true,
+    resume=false
   }) {
     ValidateLibrary(libraryId);
+
+    if(writeToken) {
+      ValidateWriteToken(writeToken);
+    }
+
+    if(resume && access.length === 0 && (!files || files.length === 0 || files.some(file => !(file instanceof File)))) {
+      return this.HandleError({
+        step: "upload",
+        errorMessage: "Unable to resume upload - original files are no longer available in memory. Please reload and create a new job.",
+        id: masterObjectId
+      });
+    }
 
     this.UpdateIngestObject({
       id: masterObjectId,
       data: {
         ...this.jobs[masterObjectId],
-        currentStep: "upload"
+        currentStep: "upload",
+        active: true,
+        error: false,
+        errorMessage: undefined,
+        errorLog: undefined,
+        upload: {
+          ...this.jobs[masterObjectId].upload,
+          runState: undefined
+        }
       }
     });
 
+    const abortController = new AbortController();
+    this.abortControllers[masterObjectId] = abortController;
+
     // Create encryption conk
     try {
-      yield this.client.CreateEncryptionConk({
-        libraryId: libraryId,
-        objectId: masterObjectId,
-        writeToken,
-        createKMSConk: true
-      });
+      yield RaceAbort(
+        this.client.CreateEncryptionConk({
+          libraryId: libraryId,
+          objectId: masterObjectId,
+          writeToken,
+          createKMSConk: true
+        }),
+        abortController.signal
+      );
     } catch(error) {
+      if(error?.name === "AbortError") {
+        delete this.abortControllers[masterObjectId];
+        return this.HandleCancel({step: "upload", id: masterObjectId});
+      }
+
       return this.HandleError({
         step: "upload",
         errorMessage: "Unable to create encryption conk.",
@@ -478,7 +682,24 @@ class IngestStore {
     }
 
     try {
+      let lastProgressUpdate = 0;
+      let lastProgressPersist = 0;
       const UploadCallback = (progress) => {
+        // A canceled/failed job's runState lives on this same `upload` object - if a chunk
+        // that was already in flight when the job was canceled completes moments later, this
+        // callback still fires and must not clobber that terminal state.
+        if(["canceled", "failed"].includes(this.jobs[masterObjectId]?.upload?.runState)) { return; }
+
+        // With up to 5 concurrent chunk uploads, this callback can fire many times per second.
+        // Each call mutates observable state, which re-renders DetailsProgress - at that
+        // frequency the resulting render churn is enough to noticeably delay unrelated UI
+        // interactions (e.g. tooltip hover) on the main thread. A percentage bar doesn't need
+        // to update faster than a human can perceive, so throttle the update itself, not just
+        // the (heavier) localStorage persistence below.
+        const now = Date.now();
+        if(now - lastProgressUpdate < 250) { return; }
+        lastProgressUpdate = now;
+
         let uploadSum = 0;
         let totalSum = 0;
         Object.values(progress).forEach(fileProgress => {
@@ -486,14 +707,27 @@ class IngestStore {
           totalSum += fileProgress.total;
         });
 
+        const percentage = Math.round((uploadSum / totalSum) * 100);
+
+        // On resume, UploadFiles always re-initializes its own progress tracker to 0 and
+        // reports that immediately, then catches back up as it discovers already-uploaded
+        // chunks it can skip. That catch-up is real progress, not a restart - don't let the
+        // displayed percentage visibly regress while it happens.
+        if(resume && percentage < (this.jobs[masterObjectId].upload?.percentage || 0)) { return; }
+
+        const shouldPersist = now - lastProgressPersist >= 1000;
+        if(shouldPersist) { lastProgressPersist = now; }
+
         this.UpdateIngestObject({
           id: masterObjectId,
           data: {
             ...this.jobs[masterObjectId],
             upload: {
-              percentage: Math.round((uploadSum / totalSum) * 100)
+              ...this.jobs[masterObjectId].upload,
+              percentage
             }
-          }
+          },
+          skipPersist: !shouldPersist
         });
       };
 
@@ -511,22 +745,27 @@ class IngestStore {
         // should be full path when using AK/Secret
         const source = s3Url ? s3Url : baseName;
 
-        yield this.client.UploadFilesFromS3({
-          libraryId,
-          objectId: masterObjectId,
-          writeToken,
-          fileInfo: [{
-            path: baseName,
-            source
-          }],
-          region,
-          bucket,
-          accessKey,
-          secret,
-          signedUrl,
-          copy,
-          encryption: "cgck"
-        });
+        yield RaceAbort(
+          this.client.UploadFilesFromS3({
+            libraryId,
+            objectId: masterObjectId,
+            writeToken,
+            fileInfo: [{
+              path: baseName,
+              source
+            }],
+            region,
+            bucket,
+            accessKey,
+            secret,
+            signedUrl,
+            copy,
+            resume,
+            signal: abortController.signal,
+            encryption: "cgck"
+          }),
+          abortController.signal
+        );
 
         // Calculate file size for S3 upload. Local upload has been calculated already
         let fileSize;
@@ -548,22 +787,33 @@ class IngestStore {
       } else {
         const fileInfo = yield FileInfo("", files);
 
-        yield this.client.UploadFiles({
-          libraryId,
-          objectId: masterObjectId,
-          writeToken,
-          fileInfo,
-          callback: UploadCallback,
-          encryption: "cgck"
-        });
+        yield RaceAbort(
+          this.client.UploadFiles({
+            libraryId,
+            objectId: masterObjectId,
+            writeToken,
+            fileInfo,
+            callback: UploadCallback,
+            resume,
+            signal: abortController.signal,
+            encryption: "cgck"
+          }),
+          abortController.signal
+        );
       }
     } catch(error) {
+      if(error?.name === "AbortError") {
+        return this.HandleCancel({step: "upload", id: masterObjectId});
+      }
+
       return this.HandleError({
         step: "upload",
         errorMessage: "Unable to upload files.",
         error,
         id: masterObjectId
       });
+    } finally {
+      delete this.abortControllers[masterObjectId];
     }
 
     this.UpdateIngestObject({
@@ -573,7 +823,8 @@ class IngestStore {
         upload: {
           ...this.jobs[masterObjectId].upload,
           complete: true,
-          runState: "finished"
+          runState: "finished",
+          percentage: 100
         },
         currentStep: "ingest"
       }
@@ -719,20 +970,22 @@ class IngestStore {
 
     // Finalize object
     let finalizeResponse;
-    try {
-      finalizeResponse = yield this.client.FinalizeContentObject({
-        libraryId,
-        objectId: masterObjectId,
-        writeToken,
-        commitMessage: "Create master object"
-      });
-    } catch(error) {
-      return this.HandleError({
-        step: "ingest",
-        errorMessage: "Unable to finalize production master.",
-        error,
-        id: masterObjectId
-      });
+    if(finalize) {
+      try {
+        finalizeResponse = yield this.client.FinalizeContentObject({
+          libraryId,
+          objectId: masterObjectId,
+          writeToken,
+          commitMessage: "Create master object"
+        });
+      } catch(error) {
+        return this.HandleError({
+          step: "ingest",
+          errorMessage: "Unable to finalize production master.",
+          error,
+          id: masterObjectId
+        });
+      }
     }
 
     if(accessGroupAddress) {
@@ -764,7 +1017,8 @@ class IngestStore {
     }
 
     return Object.assign(
-      finalizeResponse, {
+      finalizeResponse || {}, {
+        jobId: masterObjectId,
         abrProfile,
         access,
         errors: errors || [],
@@ -783,14 +1037,27 @@ class IngestStore {
     description,
     displayTitle,
     masterVersionHash,
+    masterWriteToken,
+    writeToken,
     type,
     newObject=false,
     variant="default",
     offeringKey="default",
     access=[],
-    permission
+    permission,
+    fileInfo,
+    jobId
   }) {
     let createResponse;
+    const jobIdRef = masterObjectId || jobId;
+
+    if(newObject) {
+      ({writeToken} = yield this.client.CreateContentObject({
+        libraryId,
+        options: type ? {type} : {}
+      }));
+    }
+
     try {
       createResponse = yield this.client.CreateABRMezzanine({
         libraryId,
@@ -798,6 +1065,8 @@ class IngestStore {
         type,
         name,
         masterVersionHash,
+        masterWriteToken,
+        writeToken,
         abrProfile,
         variant,
         offeringKey
@@ -807,20 +1076,15 @@ class IngestStore {
         step: "ingest",
         errorMessage: "Unable to create mezzanine object.",
         error,
-        id: masterObjectId
+        id: jobIdRef
       });
     }
     const objectId = createResponse.id;
 
-    yield this.WaitForPublish({
-      hash: createResponse.hash,
-      libraryId,
-      objectId
-    });
-
     try {
       yield this.client.SetPermission({
         objectId,
+        writeToken,
         permission
       });
     } catch(error) {
@@ -832,22 +1096,18 @@ class IngestStore {
       });
     }
 
-    let writeToken;
-    let hash;
     try {
       const response = yield this.client.StartABRMezzanineJobs({
         libraryId,
         objectId,
+        writeToken,
         access
       });
 
-      writeToken = response.writeToken;
-      hash = response.hash;
-
       this.UpdateIngestObject({
-        id: masterObjectId,
+        id: jobIdRef,
         data: {
-          ...this.jobs[masterObjectId],
+          ...this.jobs[jobIdRef],
           mezLibraryId: libraryId,
           mezObjectId: objectId,
           mezWriteToken: writeToken,
@@ -859,15 +1119,9 @@ class IngestStore {
         step: "ingest",
         errorMessage: "Unable to start ABR mezzanine jobs.",
         error,
-        id: masterObjectId
+        id: jobIdRef
       });
     }
-
-    yield this.WaitForPublish({
-      hash,
-      libraryId,
-      objectId
-    });
 
     let done;
     let errorState;
@@ -877,7 +1131,8 @@ class IngestStore {
       try {
         status = yield this.client.LROStatus({
           libraryId,
-          objectId
+          objectId,
+          writeToken
         });
       } catch(error) {
         errorState = true;
@@ -887,7 +1142,7 @@ class IngestStore {
           step: "ingest",
           errorMessage: "Failed to get LRO status.",
           error,
-          id: masterObjectId
+          id: jobIdRef
         });
       }
 
@@ -898,7 +1153,7 @@ class IngestStore {
         return this.HandleError({
           step: "ingest",
           errorMessage: "Received no job status information from server.",
-          id: masterObjectId
+          id: jobIdRef
         });
       }
 
@@ -908,7 +1163,7 @@ class IngestStore {
           defaultOptions(),
           {currentTime: new Date()}
         );
-        const enhancedStatus = enhanceLROStatus(options, status);
+        const enhancedStatus = enhanceLROStatus(options, SanitizeLROStatus(status));
 
         if(!enhancedStatus.ok) {
           clearInterval(statusIntervalId);
@@ -917,16 +1172,16 @@ class IngestStore {
           return this.HandleError({
             step: "ingest",
             errorMessage: "Unable to transcode selected file.",
-            id: masterObjectId
+            id: jobIdRef
           });
         }
 
         const {estimated_time_left_seconds, estimated_time_left_h_m_s, run_state} = enhancedStatus.result.summary;
 
         this.UpdateIngestObject({
-          id: masterObjectId,
+          id: jobIdRef,
           data: {
-            ...this.jobs[masterObjectId],
+            ...this.jobs[jobIdRef],
             mezObjectId: objectId,
             ingest: {
               runState: run_state,
@@ -934,12 +1189,12 @@ class IngestStore {
               (estimated_time_left_seconds === undefined && run_state === "running") ? "Calculating" : estimated_time_left_h_m_s ? `${estimated_time_left_h_m_s} remaining` : ""
             },
             formData: {
-              ...this.jobs[masterObjectId].formData,
+              ...this.jobs[jobIdRef].formData,
               mez: {
                 libraryId,
-                masterObjectId,
+                masterObjectId: jobIdRef,
                 abrProfile,
-                accessGroup : accessGroupAddress,
+                accessGroup: accessGroupAddress,
                 name,
                 description,
                 displayTitle,
@@ -959,7 +1214,7 @@ class IngestStore {
           done = true;
 
           await this.GenerateEmbedUrl({
-            objectId: masterObjectId,
+            objectId: jobIdRef,
             mezId: objectId
           });
 
@@ -987,14 +1242,18 @@ class IngestStore {
               step: "ingest",
               errorMessage: "Unable to update metadata.",
               error,
-              id: masterObjectId
+              id: jobIdRef
             });
           }
 
           await this.FinalizeABRMezzanine({
             libraryId,
             objectId,
-            masterObjectId
+            masterObjectId: jobIdRef,
+            writeToken,
+            s3: access.length > 0,
+            newObject,
+            fileInfo
           });
 
           if(accessGroupAddress) {
@@ -1008,7 +1267,7 @@ class IngestStore {
                 step: "ingest",
                 errorMessage: `Unable to add group permission for group: ${accessGroupAddress}`,
                 error,
-                id: masterObjectId
+                id: jobIdRef
               });
             }
           }
@@ -1072,7 +1331,15 @@ class IngestStore {
     }
   });
 
-  FinalizeABRMezzanine = flow(function * ({libraryId, objectId, masterObjectId}) {
+  FinalizeABRMezzanine = flow(function * ({
+    libraryId,
+    objectId,
+    masterObjectId,
+    writeToken,
+    s3,
+    newObject,
+    fileInfo
+  }) {
     this.UpdateIngestObject({
       id: masterObjectId,
       data: {
@@ -1082,19 +1349,30 @@ class IngestStore {
     });
 
     try {
-      const finalizeAbrResponse = yield this.client.FinalizeABRMezzanine({
+      yield this.client.FinalizeABRMezzanine({
         libraryId,
-        objectId
-      });
-
-      const formData = this.jobs[masterObjectId].formData;
-      delete formData.master.abr;
-
-      yield this.WaitForPublish({
-        hash: finalizeAbrResponse.hash,
         objectId,
-        libraryId
+        writeToken
       });
+
+      if(!s3 && !newObject) {
+        yield this.client.DeleteFiles({
+          libraryId,
+          objectId,
+          writeToken,
+          filePaths: fileInfo.map(f => f.path)
+        });
+      }
+
+      const finalizeAbrResponse = yield this.client.FinalizeContentObject({
+        libraryId,
+        objectId,
+        writeToken,
+        commitMessage: "Create ABR mezzanine"
+      });
+
+      const formData = this.jobs[masterObjectId || finalizeAbrResponse.id].formData;
+      delete formData.master.abr;
 
       this.UpdateIngestObject({
         id: masterObjectId,

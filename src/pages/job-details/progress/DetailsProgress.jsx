@@ -1,12 +1,15 @@
 import {observer} from "mobx-react-lite";
-import {Box, Loader, SimpleGrid, Text} from "@mantine/core";
+import {ActionIcon, Box, Group, Loader, SimpleGrid, Text, Tooltip} from "@mantine/core";
 import SectionTitle from "@/components/section-title/SectionTitle.jsx";
 import TextCard from "@/components/text-card/TextCard.jsx";
 import {ingestStore} from "@/stores/index.js";
 import {CheckmarkIcon} from "@/assets/icons/index.jsx";
 import styles from "./DetailsProgress.module.css";
+import {IconPlayerPlay, IconPlayerStop} from "@tabler/icons-react";
 
 const DetailsProgress = observer(({jobId}) => {
+  const uploadRunState = ingestStore.jobs[jobId].upload.runState;
+
   return (
     <Box mb={19} w="100%">
       <SectionTitle mb={19}>Progress</SectionTitle>
@@ -15,17 +18,48 @@ const DetailsProgress = observer(({jobId}) => {
         <TextCard
           title="Upload"
           message={
-            ["finished", "failed"].includes(ingestStore.jobs[jobId].upload.runState) ? null : `... ${ingestStore.jobs[jobId].upload.percentage || 0}%`
+            ["finished", "failed", "canceled"].includes(uploadRunState) ? null : `... ${ingestStore.jobs[jobId].upload.percentage || 0}%`
           }
           rightSection={
-            ingestStore.jobs[jobId].upload.runState === "failed" ?
-              <Text c="elv-red.5">
-                Failed
-              </Text> :
-              ingestStore.jobs[jobId].upload.runState === "finished" ?
-                <CheckmarkIcon className={styles.itemIcon} /> : <Loader size={20} />
+            ["failed", "canceled"].includes(uploadRunState) ?
+              <Group>
+                <Text c={uploadRunState === "failed" ? "elv-red.5" : "elv-gray.6"}>
+                  { uploadRunState === "failed" ? "Failed" : "Canceled" }
+                </Text>
+                <Tooltip
+                  label="Resume Upload"
+                  position="bottom"
+                >
+                  <ActionIcon
+                    variant="transparent"
+                    c="elv-gray.8"
+                    size={22}
+                    onClick={() => ingestStore.RunIngestPipeline({jobId, resume: true})}
+                  >
+                    <IconPlayerPlay size={22} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group> :
+              uploadRunState === "finished" ?
+                <CheckmarkIcon className={styles.itemIcon} /> :
+                <Group>
+                  <Loader size={20} />
+                  <Tooltip
+                    label="Stop Upload"
+                    position="bottom"
+                  >
+                    <ActionIcon
+                      variant="transparent"
+                      c="elv-gray.8"
+                      size={22}
+                      onClick={() => ingestStore.CancelUpload({jobId})}
+                    >
+                      <IconPlayerStop size={22} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Group>
           }
-          complete={ingestStore.jobs[jobId].upload.runState === "finished"}
+          complete={uploadRunState === "finished"}
           percentage={ingestStore.jobs[jobId].upload.percentage}
         />
       </SimpleGrid>

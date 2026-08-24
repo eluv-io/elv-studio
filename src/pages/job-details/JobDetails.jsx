@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useNavigate, useParams} from "react-router";
 import {observer} from "mobx-react-lite";
 
@@ -88,60 +88,31 @@ const JobDetails = observer(() => {
   const params = useParams();
   const jobId = params.id;
   const navigate = useNavigate();
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
     ingestStore.SetJob(jobId);
+
+    // StrictMode double-invokes mount effects in dev; HandleIngest is async and mutates job
+    // state as it progresses, so a second invocation can see mid-flight state and kick off a
+    // concurrent, incorrectly-resumed pipeline run. Only let it actually start once per mount.
+    if(hasStartedRef.current) { return; }
+    hasStartedRef.current = true;
 
     HandleIngest();
   }, []);
 
   const HandleIngest = async () => {
-    if(ingestStore.job.currentStep !== "create" || ingestStore.job.create.runState !== "finished") { return; }
+    const job = ingestStore.job;
 
-    const {abr, access, copy, files, libraryId, title, accessGroup, description, s3Url, writeToken, playbackEncryption} = ingestStore.job.formData.master;
-    const mezFormData = ingestStore.job.formData.mez;
-    const {contentType} = ingestStore.job.formData;
-
-    const response = await ingestStore.CreateProductionMaster({
-      libraryId,
-      files,
-      title,
-      description,
-      s3Url,
-      abr: abr ? JSON.parse(abr) : undefined,
-      accessGroupAddress: accessGroup,
-      access: JSON.parse(access),
-      copy,
-      masterObjectId: jobId,
-      writeToken,
-      playbackEncryption,
-      displayTitle: mezFormData.displayTitle
-    });
-
-    if(!response) { return; }
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    await ingestStore.WaitForPublish({
-      hash: response.hash,
-      objectId: jobId,
-      libraryId: libraryId
-    });
-
-    await ingestStore.CreateABRMezzanine({
-      libraryId: mezFormData.libraryId,
-      masterObjectId: response.id,
-      masterVersionHash: response.hash,
-      abrProfile: response.abrProfile,
-      type: contentType,
-      name: mezFormData.name,
-      accessGroupAddress: mezFormData.accessGroup,
-      description: mezFormData.description,
-      displayTitle: mezFormData.displayTitle,
-      newObject: mezFormData.newObject,
-      access: JSON.parse(access),
-      permission: mezFormData.permission
-    });
+    if(job.currentStep === "create" && job.create.runState === "finished") {
+      await ingestStore.RunIngestPipeline({jobId});
+    } else if(job.currentStep === "upload" && !["finished", "failed", "canceled"].includes(job.upload.runState)) {
+      // A page reload kills the in-memory abort controller and any in-flight upload, but leaves
+      // the job's currentStep/runState looking like it's still uploading. Reconnect a live upload
+      // so there's actually something for the cancel button to abort.
+      await ingestStore.RunIngestPipeline({jobId, resume: true});
+    }
   };
 
   if(!ingestStore.job) { return <Loader />; }
